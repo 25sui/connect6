@@ -1,0 +1,15 @@
+{
+  "weights": {
+    "pattern_weight": 1.0,
+    "position_weight": 0.5,
+    "connectivity_weight": 0.3,
+    "safety_weight": 0.2,
+    "potential_weight": 0.2
+  },
+  "biases": {
+    "center_bias": 10,
+    "star_point_bias": 5,
+    "edge_bias": 2
+  },
+  "learning_rate": 0.01
+}
