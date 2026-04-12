@@ -14,19 +14,21 @@
             --accent-color: #CD5C5C;
             --text-color: #333333;
             --light-text: #666666;
-            --background: #F5F5DC;
-            --board-bg: #DEB887;
-            --board-border: #8B4513;
-            --shadow: rgba(139, 69, 19, 0.2);
-            --shadow-hover: rgba(139, 69, 19, 0.4);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --gold: #FFD700;
-            --silver: #C0C0C0;
-            --board-shadow: rgba(139, 69, 19, 0.3);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            --border-radius: 16px;
+            --background: #efe7d8;
+            --panel-bg: #f7f1e6;
+            --panel-border: #d5c4a7;
+            --board-bg: #c9965c;
+            --board-border: #6d4520;
+            --shadow: rgba(92, 60, 28, 0.14);
+            --shadow-hover: rgba(92, 60, 28, 0.22);
+            --transition: all 0.22s ease;
+            --gold: #d8b04e;
+            --silver: #bfc3c8;
+            --board-shadow: rgba(92, 60, 28, 0.2);
+            --glass-bg: transparent;
+            --glass-border: rgba(109, 69, 32, 0.14);
+            --glass-shadow: 0 12px 28px rgba(92, 60, 28, 0.12);
+            --border-radius: 14px;
             --spacing-xs: 4px;
             --spacing-sm: 8px;
             --spacing-md: 16px;
@@ -48,20 +50,14 @@
         
         body {
             font-family: 'Noto Sans SC', sans-serif;
-            background: linear-gradient(135deg, var(--background) 0%, #F0E68C 100%);
+            background: linear-gradient(180deg, #f3edde 0%, #e7dcc6 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 20px;
+            align-items: flex-start;
+            padding: 28px 20px;
             position: relative;
             overflow-x: hidden;
-            animation: backgroundShift 20s ease infinite;
-        }
-        
-        @keyframes backgroundShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
         
         body::before {
@@ -75,34 +71,32 @@
                 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z" fill="%238b4513" fill-opacity="0.05" fill-rule="evenodd"/></svg>'),
                 radial-gradient(circle at 20% 80%, rgba(210, 180, 140, 0.1) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(205, 92, 92, 0.1) 0%, transparent 50%);
-            opacity: 0.3;
+            opacity: 0.18;
             pointer-events: none;
-            animation: patternMove 30s linear infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.06;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="140" height="140" filter="url(%23n)" opacity="0.55"/></svg>');
+            mix-blend-mode: multiply;
         }
         
         .game-container {
             display: flex;
-            gap: 40px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 32px;
-            padding: 40px;
-            box-shadow: 
-                0 25px 50px var(--shadow),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.3);
+            gap: 28px;
+            background: #fbf8f1;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 20px 44px var(--shadow);
             position: relative;
-            max-width: 1200px;
+            max-width: 1260px;
             width: 100%;
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(109, 69, 32, 0.1);
             transition: var(--transition);
-        }
-        
-        .game-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 
-                0 30px 60px var(--shadow-hover),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.3);
         }
         
         .game-container::before {
@@ -111,10 +105,9 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--primary-color));
-            border-radius: 32px 32px 0 0;
-            animation: gradientShift 3s ease infinite;
+            height: 4px;
+            background: linear-gradient(90deg, #7e4d22, #b97a43, #7e4d22);
+            border-radius: 24px 24px 0 0;
         }
         
         .game-container::after {
@@ -138,15 +131,13 @@
             gap: var(--spacing-lg);
             max-width: 1200px;
             margin: 0 auto;
-            padding: var(--spacing-lg) var(--spacing-md);
-            min-height: 100vh;
+            padding: 0;
+            min-height: auto;
             align-items: flex-start;
             flex-wrap: wrap;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--glass-shadow);
-            border: 1px solid var(--glass-border);
+            background: #fbf8f1;
+            box-shadow: none;
+            border: none;
             justify-content: center;
         }
         
@@ -154,8 +145,8 @@
             .game-container {
                 flex-direction: column;
                 align-items: center;
-                padding: var(--spacing-md) var(--spacing-sm);
-            }
+                 padding: 20px;
+             }
             
             .control-panel {
                 width: 100%;
@@ -217,115 +208,74 @@
         
         .board-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             position: relative;
-            padding: 20px 0;
-        }
-        
-        .board-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
-        }
-        
-        .board-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            padding: 6px 0 14px;
         }
         
         .board-title {
             font-family: 'Noto Serif SC', serif;
-            font-size: 42px;
+            font-size: 38px;
             font-weight: 700;
             color: var(--primary-color);
-            margin-bottom: 15px;
-            text-shadow: 3px 3px 6px rgba(139, 69, 19, 0.15);
+            margin-bottom: 8px;
+            text-shadow: none;
             position: relative;
             display: inline-block;
-            animation: titleFloat 4s ease-in-out infinite;
-        }
-        
-        @keyframes titleFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
         }
         
         .board-title::after {
             content: '';
             position: absolute;
-            bottom: -10px;
+            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            width: 68%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #b58559, transparent);
             border-radius: 2px;
-            animation: linePulse 3s ease-in-out infinite;
-        }
-        
-        @keyframes linePulse {
-            0%, 100% { width: 60%; opacity: 0.8; }
-            50% { width: 80%; opacity: 1; }
         }
         
         .board-subtitle {
-            font-size: 16px;
-            color: var(--light-text);
-            letter-spacing: 3px;
+            font-size: 13px;
+            color: #8f7a62;
+            letter-spacing: 2px;
             text-transform: uppercase;
             font-weight: 500;
-            animation: subtitleFade 4s ease-in-out infinite;
-        }
-        
-        @keyframes subtitleFade {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
         }
         
         .board-wrapper {
-            background: linear-gradient(145deg, #D4A574, #C49A6C);
-            padding: 30px;
-            border-radius: 24px;
+            background: linear-gradient(180deg, #d7a36b, #bf8750);
+            padding: 24px;
+            border-radius: 18px;
             box-shadow: 
-                inset 0 2px 5px rgba(255, 255, 255, 0.3),
-                inset 0 -2px 5px rgba(0, 0, 0, 0.2),
-                0 20px 40px var(--shadow),
-                0 0 0 1px rgba(255, 255, 255, 0.1);
+                inset 0 1px 0 rgba(255, 255, 255, 0.28),
+                inset 0 -1px 0 rgba(82, 49, 17, 0.22),
+                0 14px 24px var(--shadow);
             position: relative;
             transition: var(--transition);
-        }
-        
-        .board-wrapper:hover {
-            transform: translateY(-5px);
-            box-shadow: 
-                inset 0 2px 5px rgba(255, 255, 255, 0.3),
-                inset 0 -2px 5px rgba(0, 0, 0, 0.2),
-                0 25px 50px var(--shadow-hover),
-                0 0 0 1px rgba(255, 255, 255, 0.1);
         }
         
         .board-wrapper::before {
             content: '';
             position: absolute;
-            top: 15px;
-            left: 15px;
-            right: 15px;
-            bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 18px;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 12px;
             pointer-events: none;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.05));
+            background: none;
+        }
+
+        .board-wrapper::after {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border: 1px solid rgba(93, 57, 24, 0.14);
+            border-radius: 14px;
+            pointer-events: none;
         }
         
         .board {
@@ -334,13 +284,12 @@
             grid-template-rows: repeat(19, 32px);
             gap: 0;
             position: relative;
-            background: linear-gradient(145deg, #DEB887, #D2B48C);
-            border: 8px solid var(--board-border);
-            border-radius: 16px;
+            background: linear-gradient(180deg, #dcb27b, #d2a36d);
+            border: 6px solid var(--board-border);
+            border-radius: 10px;
             box-shadow: 
-                inset 0 0 30px rgba(139, 69, 19, 0.3),
-                0 8px 25px rgba(139, 69, 19, 0.4),
-                0 0 0 1px rgba(255, 255, 255, 0.2);
+                inset 0 0 22px rgba(109, 69, 32, 0.18),
+                0 8px 18px rgba(92, 60, 28, 0.18);
             overflow: hidden;
             position: relative;
         }
@@ -353,10 +302,9 @@
             right: 0;
             bottom: 0;
             background-image: 
-                radial-gradient(circle at 9,9, 4px, rgba(255,255,255,0.1) 1px, transparent 0),
-                radial-gradient(circle at 9,9, 4px, rgba(0,0,0,0.1) 1px, transparent 0);
-            background-size: 18px 18px;
-            background-position: 0 0, 9px 9px;
+                linear-gradient(0deg, rgba(122, 78, 38, 0.045), rgba(122, 78, 38, 0.045)),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 18px),
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 18px);
             pointer-events: none;
         }
         
@@ -367,7 +315,10 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.05));
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.03), rgba(0,0,0,0.03)),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><filter id="wood"><feTurbulence type="fractalNoise" baseFrequency="0.015 0.22" numOctaves="2" seed="3"/></filter><rect width="120" height="120" filter="url(%23wood)" opacity="0.18"/></svg>');
+            background-size: auto, 180px 180px;
             pointer-events: none;
         }
         
@@ -376,7 +327,7 @@
             height: 32px;
             position: relative;
             cursor: pointer;
-            transition: var(--transition);
+            transition: background-color 0.16s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -387,8 +338,7 @@
             content: '';
             position: absolute;
             background: var(--board-border);
-            opacity: 0.7;
-            transition: var(--transition);
+            opacity: 0.56;
         }
         
         .cell::before {
@@ -407,62 +357,38 @@
             transform: translateY(-50%);
         }
         
-        /* 棋盘中心点 */
+        /* 星位与天元 */
+        .cell:nth-child(61)::before,
+        .cell:nth-child(109)::before,
         .cell:nth-child(181)::before,
-        .cell:nth-child(181)::after {
-            background: var(--board-border);
-            opacity: 1;
-        }
-        
-        .cell:nth-child(181)::before {
-            width: 3px;
-        }
-        
-        .cell:nth-child(181)::after {
-            height: 3px;
-        }
-        
-        /* 星位点 */
-        .cell:nth-child(61)::before,
-        .cell:nth-child(61)::after,
-        .cell:nth-child(109)::before,
-        .cell:nth-child(109)::after,
-        .cell:nth-child(253)::before,
-        .cell:nth-child(253)::after,
-        .cell:nth-child(301)::before,
-        .cell:nth-child(301)::after {
-            background: var(--board-border);
-            opacity: 1;
-        }
-        
-        .cell:nth-child(61)::before,
-        .cell:nth-child(109)::before,
         .cell:nth-child(253)::before,
         .cell:nth-child(301)::before {
-            width: 2px;
+            width: 1px;
         }
-        
+
         .cell:nth-child(61)::after,
         .cell:nth-child(109)::after,
+        .cell:nth-child(181)::after,
         .cell:nth-child(253)::after,
         .cell:nth-child(301)::after {
-            height: 2px;
+            height: 1px;
+        }
+
+        .cell:nth-child(61)::before,
+        .cell:nth-child(109)::before,
+        .cell:nth-child(181)::before,
+        .cell:nth-child(253)::before,
+        .cell:nth-child(301)::before,
+        .cell:nth-child(61)::after,
+        .cell:nth-child(109)::after,
+        .cell:nth-child(181)::after,
+        .cell:nth-child(253)::after,
+        .cell:nth-child(301)::after {
+            opacity: 0.56;
         }
         
         .cell:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        .cell:hover::before {
-            width: 2px;
-            background: var(--accent-color);
-            opacity: 1;
-        }
-        
-        .cell:hover::after {
-            height: 2px;
-            background: var(--accent-color);
-            opacity: 1;
+            background: rgba(255, 255, 255, 0.12);
         }
         
         .piece {
@@ -474,41 +400,31 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            transition: var(--transition);
-            animation: placePiece 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.18s ease;
+            animation: placePiece 0.26s ease-out;
             position: relative;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.28);
         }
         
         @keyframes placePiece {
             0% {
-                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                transform: translate(-50%, -50%) scale(0.82);
                 opacity: 0;
-                box-shadow: 0 0 0 0 rgba(0,0,0,0.5);
-            }
-            30% {
-                transform: translate(-50%, -50%) scale(1.3) rotate(180deg);
-                box-shadow: 0 0 25px rgba(0,0,0,0.4);
-            }
-            60% {
-                transform: translate(-50%, -50%) scale(1.1) rotate(540deg);
             }
             100% {
-                transform: translate(-50%, -50%) scale(1) rotate(720deg);
+                transform: translate(-50%, -50%) scale(1);
                 opacity: 1;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.5);
             }
         }
         
         .piece.black {
-            background: radial-gradient(circle at 30% 30%, #4a4a4a, #000000);
+            background: radial-gradient(circle at 34% 28%, #595959, #131313 62%, #050505);
             box-shadow: 
-                0 6px 12px rgba(0,0,0,0.6),
-                inset -3px -3px 6px rgba(0,0,0,0.6),
-                inset 3px 3px 6px rgba(255,255,255,0.15),
-                0 0 20px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
+                0 5px 10px rgba(0,0,0,0.42),
+                inset -3px -3px 6px rgba(0,0,0,0.58),
+                inset 3px 3px 6px rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.08);
         }
         
         .piece.black::after {
@@ -524,13 +440,12 @@
         }
         
         .piece.white {
-            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            background: radial-gradient(circle at 34% 28%, #fffdf8, #ece5d8 62%, #ddd1bf);
             box-shadow: 
-                0 6px 12px rgba(0,0,0,0.4),
-                inset -3px -3px 6px rgba(0,0,0,0.15),
-                inset 3px 3px 6px rgba(255,255,255,0.9),
-                0 0 20px rgba(255,255,255,0.6);
-            border: 1px solid #ccc;
+                0 5px 10px rgba(0,0,0,0.18),
+                inset -3px -3px 6px rgba(108, 88, 56, 0.14),
+                inset 3px 3px 6px rgba(255,255,255,0.86);
+            border: 1px solid #d0c1ab;
         }
         
         .piece.white::after {
@@ -546,17 +461,12 @@
         }
         
         .piece:hover {
-            transform: translate(-50%, -50%) scale(1.2);
-            box-shadow: 
-                0 8px 16px rgba(0,0,0,0.7),
-                inset -3px -3px 6px rgba(0,0,0,0.6),
-                inset 3px 3px 6px rgba(255,255,255,0.15),
-                0 0 30px rgba(255, 205, 92, 0.7);
+            transform: translate(-50%, -50%) scale(1.08);
             z-index: 20;
         }
         
         .piece.last-move {
-            animation: pulse 2s infinite;
+            animation: none;
             position: relative;
         }
         
@@ -566,85 +476,46 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 14px;
-            height: 14px;
-            background: var(--accent-color);
+            width: 8px;
+            height: 8px;
+            background: #b44d35;
             border-radius: 50%;
-            opacity: 0.9;
-            box-shadow: 0 0 10px var(--accent-color);
+            opacity: 0.82;
             z-index: -1;
         }
         
-        .piece.last-move::after {
-            content: '';
-            position: absolute;
-            top: 30%;
-            left: 30%;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                box-shadow: 
-                    0 0 0 0 rgba(205, 92, 92, 0.9),
-                    0 6px 12px rgba(0,0,0,0.6),
-                    inset -3px -3px 6px rgba(0,0,0,0.6),
-                    inset 3px 3px 6px rgba(255,255,255,0.15);
-                transform: translate(-50%, -50%) scale(1);
-            }
-            50% {
-                box-shadow: 
-                    0 0 0 15px rgba(205, 92, 92, 0),
-                    0 8px 16px rgba(0,0,0,0.7),
-                    inset -3px -3px 6px rgba(0,0,0,0.6),
-                    inset 3px 3px 6px rgba(255,255,255,0.15);
-                transform: translate(-50%, -50%) scale(1.1);
-            }
+        .winning-line {
+            background: rgba(180, 77, 53, 0.88);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
         }
         
         .control-panel {
             flex: 1;
             min-width: 280px;
-            max-width: 350px;
+            max-width: 380px;
             display: flex;
             flex-direction: column;
-            gap: var(--spacing-md);
+            gap: 12px;
             max-height: 90vh;
             overflow-y: auto;
-            padding-right: var(--spacing-sm);
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--glass-shadow);
-            border: 1px solid var(--glass-border);
-            padding: var(--spacing-md);
+            padding-right: 4px;
+            background: var(--panel-bg);
+            border-radius: 18px;
+            box-shadow: inset 0 0 0 1px rgba(109, 69, 32, 0.08);
+            border: 1px solid var(--panel-border);
+            padding: 14px;
         }
         
         .status-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-md);
-            text-align: center;
-            box-shadow: var(--glass-shadow);
-            border: 1px solid var(--glass-border);
+            background: #fffdf8;
+            border-radius: 14px;
+            padding: 14px;
+            text-align: left;
+            box-shadow: 0 6px 14px rgba(92, 60, 28, 0.06);
+            border: 1px solid rgba(109, 69, 32, 0.1);
             position: relative;
             overflow: hidden;
-            transition: var(--transition);
             flex-shrink: 0;
-        }
-        
-        .status-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 
-                0 16px 40px var(--shadow-hover),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8),
-                0 0 0 1px rgba(255, 255, 255, 0.2);
         }
         
         .status-card::before {
@@ -653,9 +524,8 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 6px;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--primary-color));
-            animation: gradientShift 3s ease infinite;
+            height: 3px;
+            background: linear-gradient(90deg, #7e4d22, #b58559, #7e4d22);
         }
         
         @keyframes gradientShift {
@@ -667,56 +537,259 @@
         .status-label {
             font-size: 14px;
             color: var(--light-text);
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.2px;
             font-weight: 500;
         }
         
         .status-value {
             font-family: 'Noto Serif SC', serif;
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
-            padding: 15px 30px;
-            border-radius: 12px;
+            padding: 10px 16px;
+            border-radius: 10px;
             display: inline-block;
-            transition: var(--transition);
             position: relative;
             overflow: hidden;
-        }
-        
-        .status-value::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.6s;
-        }
-        
-        .status-value:hover::before {
-            left: 100%;
         }
         
         .status-value.black-turn {
             background: linear-gradient(145deg, #333, #000);
             color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: none;
         }
         
         .status-value.white-turn {
             background: linear-gradient(145deg, #fff, #e0e0e0);
             color: var(--text-color);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border: 2px solid #ddd;
+            box-shadow: none;
+            border: 1px solid #ddd;
         }
         
         .status-value.winner {
             background: linear-gradient(145deg, #ffd700, #ffed4e);
             color: var(--text-color);
             animation: winnerPulse 1.2s infinite;
+        }
+
+        .move-info {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #5f513f;
+        }
+
+        .ai-insight {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed rgba(109, 69, 32, 0.16);
+            font-size: 13px;
+            line-height: 1.55;
+            color: #7a6650;
+        }
+
+        .timer-card,
+        .difficulty-selector,
+        .history-panel,
+        .stats-card,
+        .info-card {
+            background: #fffdf8;
+            border-radius: 14px;
+            border: 1px solid rgba(109, 69, 32, 0.1);
+            box-shadow: 0 6px 14px rgba(92, 60, 28, 0.06);
+            padding: 14px;
+        }
+
+        .timer-card,
+        .history-panel,
+        .stats-card,
+        .info-card {
+            transition: none;
+        }
+
+        .timer-header,
+        .stats-title,
+        .info-title,
+        .difficulty-label {
+            font-size: 12px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: #8b6f52;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .timer-container {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .timer-item {
+            background: #f3ebdf;
+            border: 1px solid rgba(109, 69, 32, 0.1);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .timer-label {
+            font-size: 12px;
+            color: #7f6a54;
+            margin-bottom: 6px;
+        }
+
+        .timer {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 24px;
+            color: #3f2d1b;
+            background: transparent;
+            padding: 0;
+            min-width: auto;
+            box-shadow: none;
+            border: none;
+        }
+
+        .timer.warning {
+            color: #b44d35;
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .difficulty-btn {
+            border: 1px solid rgba(109, 69, 32, 0.14);
+            background: #f4ede1;
+            color: #5f513f;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 13px;
+            transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+        }
+
+        .difficulty-btn:hover {
+            background: #ede1cf;
+        }
+
+        .difficulty-btn.active {
+            background: #7d4c24;
+            color: #fffaf2;
+            border-color: #7d4c24;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .button-group + .button-group {
+            margin-top: -2px;
+        }
+
+        .btn {
+            justify-content: flex-start;
+            min-width: 0;
+            min-height: 42px;
+            flex: none;
+            padding: 11px 14px;
+            border-radius: 12px;
+            box-shadow: none;
+            border: 1px solid rgba(109, 69, 32, 0.12);
+            letter-spacing: 0.4px;
+            text-transform: none;
+            font-size: 14px;
+        }
+
+        .btn::before {
+            display: none;
+        }
+
+        .btn-primary {
+            background: #7d4c24;
+            color: #fff9f1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            background: #6e421e;
+            box-shadow: 0 8px 18px rgba(92, 60, 28, 0.12);
+        }
+
+        .btn-secondary {
+            background: #f3ebdf;
+            color: #4e4130;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-1px);
+            background: #eadfce;
+            box-shadow: 0 8px 18px rgba(92, 60, 28, 0.08);
+        }
+
+        .btn:disabled {
+            opacity: 0.48;
+        }
+
+        .history-panel {
+            max-height: 220px;
+        }
+
+        .history-item {
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: #f5eee3;
+            border-radius: 10px;
+            font-size: 13px;
+            transition: background-color 0.16s ease, transform 0.16s ease;
+            cursor: pointer;
+            border: 1px solid rgba(109, 69, 32, 0.08);
+        }
+
+        .history-item:hover {
+            background: #eee2d1;
+            transform: translateX(2px);
+        }
+
+        .history-item.active {
+            background: #7d4c24;
+            color: #fff8ef;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .stat-item {
+            background: #f5eee3;
+            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid rgba(109, 69, 32, 0.08);
+        }
+
+        .stat-value {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 22px;
+            color: #3f2d1b;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f6a54;
+        }
+
+        .info-list {
+            padding-left: 18px;
+            color: #5f513f;
+            line-height: 1.7;
+            font-size: 14px;
         }
         
         @keyframes winnerPulse {
@@ -732,6 +805,17 @@
             font-size: 14px;
             color: var(--light-text);
             border-left: 4px solid var(--accent-color);
+        }
+
+        .ai-insight {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(139, 69, 19, 0.08);
+            border: 1px solid rgba(139, 69, 19, 0.15);
+            border-radius: 10px;
+            font-size: 12px;
+            color: #6B4423;
+            line-height: 1.5;
         }
         
         .button-group {
@@ -1497,6 +1581,351 @@
                 min-width: 60px;
             }
         }
+
+        /* Final visual overrides: quieter, less templated */
+        .difficulty-selector,
+        .timer-card,
+        .history-panel,
+        .stats-card,
+        .info-card,
+        .status-card {
+            background: #fffdf8;
+            backdrop-filter: none;
+            box-shadow: 0 6px 14px rgba(92, 60, 28, 0.06);
+            border: 1px solid rgba(109, 69, 32, 0.1);
+            transform: none !important;
+        }
+
+        .control-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.05;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><filter id="paper"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/></filter><rect width="160" height="160" filter="url(%23paper)" opacity="0.45"/></svg>');
+            border-radius: inherit;
+        }
+
+        .difficulty-selector:hover,
+        .timer-card:hover,
+        .history-panel:hover,
+        .stats-card:hover,
+        .info-card:hover,
+        .status-card:hover {
+            transform: none;
+            box-shadow: 0 8px 16px rgba(92, 60, 28, 0.08);
+        }
+
+        .settings-card {
+            background: #f9f4ea;
+            border: 1px solid rgba(109, 69, 32, 0.12);
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .settings-title {
+            font-size: 12px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: #8b6f52;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .setting-row {
+            padding: 10px 0;
+            border-top: 1px solid rgba(109, 69, 32, 0.08);
+        }
+
+        .setting-row:first-of-type {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .setting-row-compact {
+            padding-bottom: 0;
+        }
+
+        .difficulty-selector::before,
+        .timer-card::before,
+        .stats-card::before,
+        .info-card::before,
+        .status-card::before {
+            height: 3px;
+            background: linear-gradient(90deg, #7e4d22, #b58559, #7e4d22);
+            animation: none;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .button-group-primary .btn-primary {
+            grid-column: span 2;
+            justify-content: center;
+            min-height: 46px;
+            font-weight: 700;
+        }
+
+        .button-group-tools {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .btn {
+            justify-content: flex-start;
+            min-width: 0;
+            flex: none;
+            text-transform: none;
+            letter-spacing: 0.4px;
+            border-radius: 12px;
+            border: 1px solid rgba(109, 69, 32, 0.12);
+            box-shadow: none;
+            font-size: 13px;
+        }
+
+        .btn::before {
+            display: none;
+        }
+
+        .btn-primary {
+            background: #7d4c24;
+            color: #fff9f1;
+        }
+
+        .btn-primary:hover {
+            background: #6e421e;
+            transform: translateY(-1px) scale(1);
+            box-shadow: 0 8px 18px rgba(92, 60, 28, 0.12);
+        }
+
+        .btn-secondary {
+            background: #f3ebdf;
+            color: #4e4130;
+        }
+
+        .btn-secondary:hover {
+            background: #eadfce;
+            transform: translateY(-1px) scale(1);
+            box-shadow: 0 8px 18px rgba(92, 60, 28, 0.08);
+        }
+
+        .difficulty-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .difficulty-btn {
+            flex: 1 1 auto;
+            min-height: 40px;
+            border-radius: 999px;
+            background: #f4ede1;
+            color: #5f513f;
+            border: 1px solid rgba(109, 69, 32, 0.14);
+            transform: none;
+        }
+
+        .difficulty-btn:hover {
+            background: #ede1cf;
+            color: #5f513f;
+            transform: none;
+        }
+
+        .difficulty-btn.active {
+            background: #7d4c24;
+            color: #fffaf2;
+            border-color: #7d4c24;
+        }
+
+        .move-info {
+            margin-top: 10px;
+            padding: 0;
+            background: none;
+            border-radius: 0;
+            border-left: none;
+            color: #5f513f;
+            line-height: 1.5;
+        }
+
+        .ai-insight {
+            margin-top: 12px;
+            padding: 10px 0 0;
+            background: none;
+            border: none;
+            border-top: 1px dashed rgba(109, 69, 32, 0.16);
+            border-radius: 0;
+            color: #7a6650;
+        }
+
+        .history-panel {
+            max-height: 220px;
+        }
+
+        .history-title,
+        .stats-title,
+        .info-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            text-transform: none;
+        }
+
+        .history-item {
+            background: #f5eee3;
+            border-radius: 10px;
+            border: 1px solid rgba(109, 69, 32, 0.08);
+            transition: background-color 0.16s ease, transform 0.16s ease;
+        }
+
+        .history-item:hover {
+            background: #eee2d1;
+            transform: translateX(2px);
+        }
+
+        .history-item.active {
+            background: #7d4c24;
+            color: #fff8ef;
+        }
+
+        .stats-card {
+            color: inherit;
+        }
+
+        .stat-item {
+            background: #f5eee3;
+            border-radius: 12px;
+            border: 1px solid rgba(109, 69, 32, 0.08);
+        }
+
+        .stat-value {
+            color: #3f2d1b;
+        }
+
+        .stat-label,
+        .timer-label,
+        .difficulty-label,
+        .timer-header,
+        .stats-title,
+        .info-title {
+            color: #8b6f52;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+        }
+
+        .difficulty-label,
+        .timer-label {
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        .timer-container {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .timer-item {
+            background: #f3ebdf;
+            border: 1px solid rgba(109, 69, 32, 0.1);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .timer {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            color: #3f2d1b;
+            padding: 0;
+            min-width: auto;
+        }
+
+        .info-card::before,
+        .info-title::before,
+        .toast::before {
+            animation: none;
+        }
+
+        .info-card::before {
+            width: 3px;
+            border-radius: 14px 0 0 14px;
+        }
+
+        .info-list {
+            list-style: disc;
+            padding-left: 18px;
+            margin: 0;
+        }
+
+        .info-list li {
+            display: list-item;
+            padding: 6px 0;
+            border-bottom: none;
+            margin: 0;
+            background: none;
+            font-size: 14px;
+        }
+
+        .info-list li:hover {
+            color: #5f513f;
+            padding: 6px 0;
+            margin: 0;
+            background: none;
+        }
+
+        .info-list li::before {
+            display: none;
+        }
+
+        .toast {
+            background: rgba(44, 33, 22, 0.94);
+            padding: 16px 18px;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+            backdrop-filter: none;
+            border-left: 3px solid #b58559;
+            animation: slideIn 0.24s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(24px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group-primary .btn-primary {
+                grid-column: auto;
+            }
+
+            .control-panel {
+                max-width: 100%;
+            }
+
+            .timer-container,
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .game-container {
+                border-radius: 18px;
+                padding: 18px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1504,7 +1933,7 @@
         <div class="board-section">
             <div class="board-header">
                 <h1 class="board-title">六子棋</h1>
-                <p class="board-subtitle">Connect 6</p>
+                <p class="board-subtitle">静局对弈，落子见势</p>
             </div>
             <div class="board-wrapper">
                 <div class="board" id="board"></div>
@@ -1516,6 +1945,7 @@
                 <div class="status-label">当前回合</div>
                 <div class="status-value black-turn" id="status">黑棋</div>
                 <div class="move-info" id="moveInfo">黑方第一手：下 1 子</div>
+                <div class="ai-insight" id="aiInsight">AI决策说明：等待本回合分析</div>
             </div>
             
             <div class="timer-card">
@@ -1531,66 +1961,59 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="difficulty-selector">
-                <div class="difficulty-label">AI难度</div>
-                <div class="difficulty-buttons">
-                    <button class="difficulty-btn active" id="difficultyEasyBtn" onclick="setDifficulty('easy', this)">简单</button>
-                    <button class="difficulty-btn" id="difficultyMediumBtn" onclick="setDifficulty('medium', this)">中等</button>
-                    <button class="difficulty-btn" id="difficultyHardBtn" onclick="setDifficulty('hard', this)">困难</button>
+
+            <div class="settings-card">
+                <div class="settings-title">对局设置</div>
+                <div class="setting-row">
+                    <div class="difficulty-label">AI难度</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="difficultyEasyBtn" onclick="setDifficulty('easy', this)">简单</button>
+                        <button class="difficulty-btn" id="difficultyMediumBtn" onclick="setDifficulty('medium', this)">中等</button>
+                        <button class="difficulty-btn" id="difficultyHardBtn" onclick="setDifficulty('hard', this)">困难</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="difficulty-label">游戏模式</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="gameModeAiBtn" onclick="setGameMode('ai', this)">人机对战</button>
+                        <button class="difficulty-btn" id="gameModeHumanBtn" onclick="setGameMode('human', this)">人人对战</button>
+                    </div>
+                </div>
+                <div class="setting-row setting-row-compact">
+                    <div class="difficulty-label">先后手</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="humanFirstBtn" onclick="setFirstPlayer('human')">人类先手</button>
+                        <button class="difficulty-btn" id="aiFirstBtn" onclick="setFirstPlayer('ai')">AI先手</button>
+                    </div>
                 </div>
             </div>
             
-            <div class="difficulty-selector">
-                <div class="difficulty-label">游戏模式</div>
-                <div class="difficulty-buttons">
-                    <button class="difficulty-btn active" id="gameModeAiBtn" onclick="setGameMode('ai', this)">人机对战</button>
-                    <button class="difficulty-btn" id="gameModeHumanBtn" onclick="setGameMode('human', this)">人人对战</button>
-                </div>
-            </div>
-            
-            <div class="difficulty-selector">
-                <div class="difficulty-label">先后手</div>
-                <div class="difficulty-buttons">
-                    <button class="difficulty-btn active" id="humanFirstBtn" onclick="setFirstPlayer('human')">人类先手</button>
-                    <button class="difficulty-btn" id="aiFirstBtn" onclick="setFirstPlayer('ai')">AI先手</button>
-                </div>
-            </div>
-            
-            <div class="button-group">
+            <div class="button-group button-group-primary">
                 <button class="btn btn-primary" id="aiBtn" onclick="aiMove()">
-                    <span>🤖</span>
                     <span>AI 走棋</span>
                 </button>
                 <button class="btn btn-secondary" onclick="restartGame()">
-                    <span>🔄</span>
                     <span>重新开始</span>
                 </button>
             </div>
             
-            <div class="button-group">
+            <div class="button-group button-group-tools">
                 <button class="btn btn-secondary" onclick="exportGame()">
-                    <span>📤</span>
                     <span>导出棋谱</span>
                 </button>
                 <button class="btn btn-secondary" onclick="importGame()">
-                    <span>📥</span>
                     <span>导入棋谱</span>
                 </button>
                 <button class="btn btn-secondary" onclick="toggleNotation()">
-                    <span>📝</span>
                     <span>棋子标记</span>
                 </button>
                 <button class="btn btn-secondary" id="continueBtn" onclick="continueFromHistory()" disabled>
-                    <span>▶</span>
                     <span>从此继续</span>
                 </button>
                 <button class="btn btn-secondary" id="returnLatestBtn" onclick="returnToLatest()" disabled>
-                    <span>⏭</span>
                     <span>返回最新</span>
                 </button>
                 <button class="btn btn-secondary" id="undoBtn" onclick="undoMove()" disabled>
-                    <span>↩️</span>
                     <span>悔棋</span>
                 </button>
             </div>
@@ -1605,7 +2028,7 @@
             </div>
             
             <div class="stats-card">
-                <div class="stats-title">游戏统计</div>
+                <div class="stats-title">局面概览</div>
                 <div class="stats-grid">
                     <div class="stat-item">
                         <div class="stat-value" id="blackCount">0</div>
@@ -1627,13 +2050,11 @@
             </div>
             
             <div class="info-card">
-                <div class="info-title">游戏规则</div>
+                <div class="info-title">简要规则</div>
                 <ul class="info-list">
-                    <li>黑棋先行，第一手只下 1 子</li>
-                    <li>之后每方每回合下 2 子</li>
-                    <li>先形成六连子者获胜</li>
-                    <li>横、竖、斜均可连成</li>
-                    <li>点击棋盘格子落子</li>
+                    <li>黑棋先行，首手仅落一子。</li>
+                    <li>之后双方每回合各落两子。</li>
+                    <li>任一方向先成六连即获胜。</li>
                 </ul>
             </div>
         </div>
@@ -1659,6 +2080,7 @@
         let notationEnabled = false; // 棋子标记是否启用
         let firstPlayer = 'human'; // 先手方: human 或 ai
         let gameMode = 'ai'; // 游戏模式: ai 或 human
+        let lastAIDecision = '等待本回合分析';
         
         // 时间限制相关
         let blackTime = 600; // 黑方时间（秒）
@@ -1712,6 +2134,15 @@
                 badge.textContent = '当前局面';
                 badge.classList.remove('browsing');
             }
+        }
+
+        function updateAIInsight(message = lastAIDecision) {
+            const insightEl = document.getElementById('aiInsight');
+            if (!insightEl) {
+                return;
+            }
+
+            insightEl.textContent = `AI决策说明：${message}`;
         }
 
         function updateActionButtons() {
@@ -1835,6 +2266,7 @@
             updateHistory();
             updateActionButtons();
             updateHistoryModeBadge();
+            updateAIInsight('等待本回合分析');
         }
         
         // 设置AI难度
@@ -1852,7 +2284,7 @@
             
             // 显示AI相关控件
             const aiRelatedElements = [
-                document.getElementById('humanFirstBtn')?.closest('.difficulty-selector'),
+                document.getElementById('humanFirstBtn')?.closest('.setting-row'),
                 document.getElementById('aiBtn')
             ].filter(Boolean);
             if (mode === 'ai') {
@@ -2350,10 +2782,10 @@
             if (moves.length > 0) {
                 setTimeout(() => {
                     makeMove(moves[0].x, moves[0].y);
-                    
+                     
                     if (!gameOver && isAITurn() && moveCount < 2) {
                         setTimeout(() => {
-                            const moves2 = findBestMoves();
+                            const moves2 = findBestMoves({ firstMove: moves[0] });
                             if (moves2.length > 0) {
                                 makeMove(moves2[0].x, moves2[0].y);
                             }
@@ -2485,9 +2917,93 @@
 
             return Math.round(score * threatScale);
         }
+
+        function scoreMoveSynergy(x, y, context) {
+            if (!context || !context.firstMove) {
+                return 0;
+            }
+
+            const { firstMove } = context;
+            const dx = Math.abs(firstMove.x - x);
+            const dy = Math.abs(firstMove.y - y);
+            const sameLine = firstMove.x === x || firstMove.y === y || dx === dy;
+            const distance = Math.max(dx, dy);
+
+            let score = 0;
+
+            if (sameLine) {
+                score += 180;
+            }
+
+            if (distance <= 2) {
+                score += 220;
+            } else if (distance <= 4) {
+                score += 90;
+            } else if (distance >= 7) {
+                score -= 120;
+            }
+
+            return score;
+        }
+
+        function evaluateOpponentBestResponse(limit = 3) {
+            const aiPlayer = getAITurnPlayer();
+            const opponentPlayer = aiPlayer === 1 ? 2 : 1;
+            const candidateMoves = getCandidateMoves(8);
+            let maxThreat = 0;
+
+            for (const { x, y } of candidateMoves.slice(0, limit)) {
+                board[y][x] = opponentPlayer;
+
+                if (checkWin(x, y, opponentPlayer)) {
+                    board[y][x] = 0;
+                    return 100000;
+                }
+
+                maxThreat = Math.max(maxThreat, evaluatePosition(x, y, { playerOverride: opponentPlayer, defenseOverride: aiPlayer }));
+                board[y][x] = 0;
+            }
+
+            return maxThreat;
+        }
+
+        function describeAIMove(move, score, context = null) {
+            if (!move) {
+                return '等待本回合分析';
+            }
+
+            if (score >= 100000) {
+                return '优先选择直接取胜点';
+            }
+
+            if (score >= 90000) {
+                return '优先封堵对手的直接胜点';
+            }
+
+            if (context?.firstMove) {
+                const dx = Math.abs(context.firstMove.x - move.x);
+                const dy = Math.abs(context.firstMove.y - move.y);
+                if (dx <= 2 && dy <= 2) {
+                    return '第二子贴近首子，强化局部联动';
+                }
+                if (context.firstMove.x === move.x || context.firstMove.y === move.y || dx === dy) {
+                    return '第二子沿同线扩展，保持连续压迫';
+                }
+            }
+
+            if (score > 12000) {
+                return '兼顾进攻与防守，优先处理高威胁区域';
+            }
+
+            if (score > 4000) {
+                return '围绕现有棋形扩张，提升后续威胁';
+            }
+
+            return '选择局部密度更高的位置，保持棋形稳定';
+        }
         
         // 寻找最佳走法
-        function findBestMoves() {
+        function findBestMoves(context = null) {
             const moves = [];
             const aiPlayer = getAITurnPlayer();
             const opponentPlayer = aiPlayer === 1 ? 2 : 1;
@@ -2504,7 +3020,10 @@
                     board[y][x] = 0;
                 }
             }
-            if (moves.length > 0) return moves;
+            if (moves.length > 0) {
+                lastAIDecision = '优先选择直接取胜点';
+                return moves;
+            }
             
             // 2. 阻止对手获胜
             for (let y = 0; y < BOARD_SIZE; y++) {
@@ -2517,18 +3036,51 @@
                     board[y][x] = 0;
                 }
             }
-            if (moves.length > 0) return moves;
+            if (moves.length > 0) {
+                lastAIDecision = '优先封堵对手的直接胜点';
+                return moves;
+            }
             
             // 3. 评估高质量候选空位
-            for (const { x, y } of candidateMoves) {
-                const score = evaluatePosition(x, y);
-                if (score > 0) {
-                    moves.push({ x, y, score });
+            const scoredMoves = candidateMoves.map(({ x, y }) => {
+                let score = evaluatePosition(x, y, context);
+
+                if (context?.firstMove) {
+                    score += scoreMoveSynergy(x, y, context);
+                }
+
+                return { x, y, score };
+            });
+
+            if (aiDifficulty === 'hard') {
+                scoredMoves.sort((a, b) => b.score - a.score);
+
+                for (let index = 0; index < Math.min(scoredMoves.length, 6); index++) {
+                    const move = scoredMoves[index];
+                    board[move.y][move.x] = aiPlayer;
+                    const responseThreat = evaluateOpponentBestResponse(3);
+                    board[move.y][move.x] = 0;
+
+                    if (responseThreat >= 100000) {
+                        move.score -= 15000;
+                    } else {
+                        move.score -= Math.floor(responseThreat * 0.12);
+                    }
+                }
+            }
+
+            for (const move of scoredMoves) {
+                if (move.score > 0) {
+                    moves.push(move);
                 }
             }
             
             // 按分数排序
             moves.sort((a, b) => b.score - a.score);
+
+            if (moves.length > 0) {
+                lastAIDecision = describeAIMove(moves[0], moves[0].score, context);
+            }
             
             // 根据难度调整选择策略
             let bestMoves = moves;
@@ -2554,6 +3106,7 @@
                 }
                 if (emptyCells.length > 0) {
                     const randomIndex = Math.floor(Math.random() * emptyCells.length);
+                    lastAIDecision = '候选点不足，退化为随机合法落子';
                     return [emptyCells[randomIndex]];
                 }
             }
@@ -2562,10 +3115,10 @@
         }
         
         // 评估位置
-        function evaluatePosition(x, y) {
+        function evaluatePosition(x, y, context = null) {
             const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-            const aiPlayer = getAITurnPlayer();
-            const opponentPlayer = aiPlayer === 1 ? 2 : 1;
+            const aiPlayer = context?.playerOverride ?? getAITurnPlayer();
+            const opponentPlayer = context?.defenseOverride ?? (aiPlayer === 1 ? 2 : 1);
             let attackScore = 0;
             let defenseScore = 0;
             let multiThreats = 0;
@@ -2625,6 +3178,7 @@
                     statusEl.className = 'status-value';
                 }
                 moveInfoEl.textContent = '游戏结束';
+                updateAIInsight(lastAIDecision);
             } else {
                 const isFirstMove = totalMoveCount === 0;
                 const movesNeeded = isFirstMove ? 1 : (2 - moveCount);
@@ -2634,6 +3188,7 @@
                 
                 if (isBrowsingHistory()) {
                     moveInfoEl.textContent = `历史浏览：第 ${viewedHistoryIndex + 1} 步`;
+                    updateAIInsight('当前处于历史浏览模式');
                     return;
                 }
 
@@ -2655,6 +3210,8 @@
                         moveInfoEl.textContent = `${turnText}回合：还需下 ${movesNeeded} 子`;
                     }
                 }
+
+                updateAIInsight(lastAIDecision);
             }
         }
         
