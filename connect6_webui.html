@@ -838,6 +838,24 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+
+        .history-mode-badge {
+            margin-left: auto;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: rgba(210, 180, 140, 0.18);
+            color: var(--primary-color);
+            border: 1px solid rgba(210, 180, 140, 0.3);
+        }
+
+        .history-mode-badge.browsing {
+            background: rgba(205, 92, 92, 0.18);
+            color: #8B0000;
+            border-color: rgba(205, 92, 92, 0.35);
+        }
         
         .history-list {
             list-style: none;
@@ -1517,25 +1535,17 @@
             <div class="difficulty-selector">
                 <div class="difficulty-label">AI难度</div>
                 <div class="difficulty-buttons">
-                    <button class="difficulty-btn active" onclick="setDifficulty('easy')">简单</button>
-                    <button class="difficulty-btn" onclick="setDifficulty('medium')">中等</button>
-                    <button class="difficulty-btn" onclick="setDifficulty('hard')">困难</button>
+                    <button class="difficulty-btn active" id="difficultyEasyBtn" onclick="setDifficulty('easy', this)">简单</button>
+                    <button class="difficulty-btn" id="difficultyMediumBtn" onclick="setDifficulty('medium', this)">中等</button>
+                    <button class="difficulty-btn" id="difficultyHardBtn" onclick="setDifficulty('hard', this)">困难</button>
                 </div>
             </div>
             
             <div class="difficulty-selector">
                 <div class="difficulty-label">游戏模式</div>
                 <div class="difficulty-buttons">
-                    <button class="difficulty-btn active" onclick="setGameMode('ai')">人机对战</button>
-                    <button class="difficulty-btn" onclick="setGameMode('human')">人人对战</button>
-                </div>
-            </div>
-            
-            <div class="difficulty-selector">
-                <div class="difficulty-label">AI模式</div>
-                <div class="difficulty-buttons">
-                    <button class="difficulty-btn active" onclick="setAIMode('local')">本地AI</button>
-                    <button class="difficulty-btn" onclick="setAIMode('remote')">远程C++ AI</button>
+                    <button class="difficulty-btn active" id="gameModeAiBtn" onclick="setGameMode('ai', this)">人机对战</button>
+                    <button class="difficulty-btn" id="gameModeHumanBtn" onclick="setGameMode('human', this)">人人对战</button>
                 </div>
             </div>
             
@@ -1571,6 +1581,14 @@
                     <span>📝</span>
                     <span>棋子标记</span>
                 </button>
+                <button class="btn btn-secondary" id="continueBtn" onclick="continueFromHistory()" disabled>
+                    <span>▶</span>
+                    <span>从此继续</span>
+                </button>
+                <button class="btn btn-secondary" id="returnLatestBtn" onclick="returnToLatest()" disabled>
+                    <span>⏭</span>
+                    <span>返回最新</span>
+                </button>
                 <button class="btn btn-secondary" id="undoBtn" onclick="undoMove()" disabled>
                     <span>↩️</span>
                     <span>悔棋</span>
@@ -1581,6 +1599,7 @@
                 <div class="history-title">
                     <span>📋</span>
                     <span>历史记录</span>
+                    <span class="history-mode-badge" id="historyModeBadge">当前局面</span>
                 </div>
                 <ul class="history-list" id="historyList"></ul>
             </div>
@@ -1635,8 +1654,8 @@
         let turnNumber = 1; // 回合数
         let lastMove = null; // 最后一步
         let aiDifficulty = 'easy'; // AI难度
-        let aiMode = 'local'; // AI模式: local 或 remote
         let moveHistory = []; // 移动历史记录
+        let viewedHistoryIndex = null; // 历史浏览位置，null 表示当前对局
         let notationEnabled = false; // 棋子标记是否启用
         let firstPlayer = 'human'; // 先手方: human 或 ai
         let gameMode = 'ai'; // 游戏模式: ai 或 human
@@ -1646,6 +1665,153 @@
         let whiteTime = 600; // 白方时间（秒）
         let timerInterval = null; // 计时器间隔
         let isTimerRunning = false; // 计时器是否运行
+
+        function updateModeButtons(selectedButton, buttonIds) {
+            buttonIds.forEach(id => {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.classList.toggle('active', button === selectedButton);
+                }
+            });
+        }
+
+        function getAITurnPlayer() {
+            return firstPlayer === 'ai' ? 1 : 2;
+        }
+
+        function isAITurn() {
+            return gameMode === 'ai' && currentPlayer === getAITurnPlayer();
+        }
+
+        function getStonesPlayedInCurrentTurn(totalMoves) {
+            if (totalMoves <= 0) {
+                return 0;
+            }
+
+            if (totalMoves === 1) {
+                return 1;
+            }
+
+            return totalMoves % 2 === 0 ? 1 : 2;
+        }
+
+        function isBrowsingHistory() {
+            return viewedHistoryIndex !== null;
+        }
+
+        function updateHistoryModeBadge() {
+            const badge = document.getElementById('historyModeBadge');
+            if (!badge) {
+                return;
+            }
+
+            if (isBrowsingHistory()) {
+                badge.textContent = `浏览中: 第 ${viewedHistoryIndex + 1} 步`;
+                badge.classList.add('browsing');
+            } else {
+                badge.textContent = '当前局面';
+                badge.classList.remove('browsing');
+            }
+        }
+
+        function updateActionButtons() {
+            const aiButton = document.getElementById('aiBtn');
+            const undoButton = document.getElementById('undoBtn');
+            const continueButton = document.getElementById('continueBtn');
+            const returnLatestButton = document.getElementById('returnLatestBtn');
+
+            if (aiButton) {
+                aiButton.disabled = gameMode !== 'ai' || gameOver || !isAITurn() || isBrowsingHistory();
+            }
+
+            if (undoButton) {
+                undoButton.disabled = moveHistory.length === 0 || isBrowsingHistory();
+            }
+
+            if (continueButton) {
+                continueButton.disabled = !isBrowsingHistory();
+            }
+
+            if (returnLatestButton) {
+                returnLatestButton.disabled = !isBrowsingHistory();
+            }
+        }
+
+        function validateMoveHistory(history) {
+            if (!Array.isArray(history)) {
+                throw new Error('无效的棋谱格式');
+            }
+
+            const seen = new Set();
+
+            history.forEach((move, index) => {
+                if (!move || !Number.isInteger(move.x) || !Number.isInteger(move.y)) {
+                    throw new Error(`第${index + 1}步坐标无效`);
+                }
+
+                if (!isValid(move.x, move.y)) {
+                    throw new Error(`第${index + 1}步超出棋盘范围`);
+                }
+
+                if (move.player !== 1 && move.player !== 2) {
+                    throw new Error(`第${index + 1}步执子方无效`);
+                }
+
+                const key = `${move.x},${move.y}`;
+                if (seen.has(key)) {
+                    throw new Error(`第${index + 1}步与之前落子重复`);
+                }
+
+                seen.add(key);
+            });
+        }
+
+        function rebuildStateFromHistory(history, upToIndex = history.length - 1) {
+            board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
+            currentPlayer = 1;
+            gameOver = false;
+            winner = null;
+            moveCount = 0;
+            totalMoveCount = 0;
+            turnNumber = 1;
+            lastMove = null;
+
+            if (upToIndex < 0) {
+                return;
+            }
+
+            for (let i = 0; i <= upToIndex; i++) {
+                const move = history[i];
+                board[move.y][move.x] = move.player;
+                lastMove = { x: move.x, y: move.y };
+                totalMoveCount++;
+
+                if (checkWin(move.x, move.y, move.player)) {
+                    gameOver = true;
+                    winner = move.player;
+                }
+
+                if (gameOver) {
+                    currentPlayer = move.player;
+                    moveCount = getStonesPlayedInCurrentTurn(totalMoveCount);
+                    turnNumber = Math.floor(Math.max(totalMoveCount - 1, 0) / 2) + 1;
+                    break;
+                }
+
+                const isFirstMove = totalMoveCount === 1;
+                const shouldSwitch = isFirstMove || moveCount + 1 >= 2;
+
+                if (shouldSwitch) {
+                    currentPlayer = currentPlayer === 1 ? 2 : 1;
+                    moveCount = 0;
+                    if (currentPlayer === 1) {
+                        turnNumber++;
+                    }
+                } else {
+                    moveCount++;
+                }
+            }
+        }
         
         // 初始化游戏
         function initGame() {
@@ -1658,6 +1824,7 @@
             turnNumber = 1;
             lastMove = null;
             moveHistory = [];
+            viewedHistoryIndex = null;
             
             // 重置时间
             resetTimer();
@@ -1666,32 +1833,28 @@
             updateStatus();
             updateStats();
             updateHistory();
-            document.getElementById('undoBtn').disabled = true;
+            updateActionButtons();
+            updateHistoryModeBadge();
         }
         
         // 设置AI难度
-        function setDifficulty(difficulty) {
+        function setDifficulty(difficulty, button) {
             aiDifficulty = difficulty;
-            
-            // 更新难度按钮状态
-            const buttons = document.querySelectorAll('.difficulty-selector:nth-child(3) .difficulty-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            updateModeButtons(button, ['difficultyEasyBtn', 'difficultyMediumBtn', 'difficultyHardBtn']);
             
             showMessage(`AI难度已设置为${difficulty === 'easy' ? '简单' : difficulty === 'medium' ? '中等' : '困难'}`);
         }
         
         // 设置游戏模式
-        function setGameMode(mode) {
+        function setGameMode(mode, button) {
             gameMode = mode;
-            
-            // 更新模式按钮状态
-            const buttons = document.querySelectorAll('.difficulty-selector:nth-child(3) .difficulty-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            updateModeButtons(button, ['gameModeAiBtn', 'gameModeHumanBtn']);
             
             // 显示AI相关控件
-            const aiRelatedElements = document.querySelectorAll('.difficulty-selector:nth-child(4), .difficulty-selector:nth-child(5), #aiBtn');
+            const aiRelatedElements = [
+                document.getElementById('humanFirstBtn')?.closest('.difficulty-selector'),
+                document.getElementById('aiBtn')
+            ].filter(Boolean);
             if (mode === 'ai') {
                 aiRelatedElements.forEach(el => el.style.display = 'block');
             } else {
@@ -1702,18 +1865,6 @@
             restartGame();
             
             showMessage(`游戏模式已设置为${mode === 'ai' ? '人机对战' : '人人对战'}`);
-        }
-        
-        // 设置AI模式
-        function setAIMode(mode) {
-            aiMode = mode;
-            
-            // 更新模式按钮状态
-            const buttons = document.querySelectorAll('.difficulty-selector:nth-child(4) .difficulty-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            showMessage(`AI模式已设置为${mode === 'local' ? '本地AI' : '远程C++ AI'}`);
         }
         
         // 设置先后手
@@ -1738,41 +1889,27 @@
             moveHistory.forEach((move, index) => {
                 const li = document.createElement('li');
                 li.className = 'history-item';
+                if ((isBrowsingHistory() && viewedHistoryIndex === index) || (!isBrowsingHistory() && index === moveHistory.length - 1)) {
+                    li.classList.add('active');
+                }
                 li.textContent = `第${index + 1}步: ${move.player === 1 ? '黑' : '白'} ${move.x},${move.y}`;
                 li.onclick = () => jumpToMove(index);
                 historyList.appendChild(li);
             });
-            
-            // 更新悔棋按钮状态
-            document.getElementById('undoBtn').disabled = moveHistory.length === 0;
+
+            updateActionButtons();
+            updateHistoryModeBadge();
         }
         
         // 悔棋
         function undoMove() {
             if (moveHistory.length === 0) return;
-            
-            // 移除最后一步
-            const lastMove = moveHistory.pop();
-            board[lastMove.y][lastMove.x] = 0;
-            
-            // 更新游戏状态
-            totalMoveCount--;
-            
-            // 检查是否需要调整回合和玩家
-            if (totalMoveCount === 0) {
-                currentPlayer = 1;
-                moveCount = 0;
-                turnNumber = 1;
-            } else {
-                // 计算当前回合的已下子数
-                const isFirstMove = totalMoveCount === 1;
-                moveCount = isFirstMove ? 0 : (totalMoveCount % 2 === 0 ? 0 : 1);
-                currentPlayer = totalMoveCount % 2 === 0 ? 2 : 1;
-                turnNumber = Math.floor(totalMoveCount / 2) + 1;
-            }
-            
-            gameOver = false;
-            winner = null;
+
+            stopTimer();
+
+            moveHistory.pop();
+            viewedHistoryIndex = null;
+            rebuildStateFromHistory(moveHistory);
             
             renderBoard();
             updateStatus();
@@ -1783,28 +1920,45 @@
         
         // 跳转到指定步数
         function jumpToMove(index) {
-            // 重置游戏
-            initGame();
-            
-            // 重新应用到指定步数
-            for (let i = 0; i <= index; i++) {
-                const move = moveHistory[i];
-                board[move.y][move.x] = move.player;
-                totalMoveCount++;
-                lastMove = { x: move.x, y: move.y };
-            }
-            
-            // 更新游戏状态
-            const isFirstMove = totalMoveCount === 1;
-            moveCount = isFirstMove ? 1 : (totalMoveCount % 2 === 0 ? 0 : 1);
-            currentPlayer = totalMoveCount % 2 === 0 ? 2 : 1;
-            turnNumber = Math.floor(totalMoveCount / 2) + 1;
-            
+            stopTimer();
+
+            viewedHistoryIndex = index;
+            rebuildStateFromHistory(moveHistory, index);
+              
             renderBoard();
             updateStatus();
             updateStats();
             updateHistory();
             showMessage(`已跳转到第${index + 1}步`);
+        }
+
+        function continueFromHistory() {
+            if (!isBrowsingHistory()) return;
+
+            stopTimer();
+            moveHistory = moveHistory.slice(0, viewedHistoryIndex + 1);
+            viewedHistoryIndex = null;
+            rebuildStateFromHistory(moveHistory);
+
+            renderBoard();
+            updateStatus();
+            updateStats();
+            updateHistory();
+            showMessage('已从当前历史节点继续对局');
+        }
+
+        function returnToLatest() {
+            if (!isBrowsingHistory()) return;
+
+            stopTimer();
+            viewedHistoryIndex = null;
+            rebuildStateFromHistory(moveHistory);
+
+            renderBoard();
+            updateStatus();
+            updateStats();
+            updateHistory();
+            showMessage('已返回最新局面');
         }
         
         // 导出棋谱
@@ -1847,27 +2001,15 @@
                 reader.onload = function(e) {
                     try {
                         const gameData = JSON.parse(e.target.result);
-                        
-                        // 验证数据格式
-                        if (!gameData.moveHistory || !Array.isArray(gameData.moveHistory)) {
-                            throw new Error('无效的棋谱格式');
-                        }
+                        validateMoveHistory(gameData.moveHistory);
                         
                         // 重置游戏
                         initGame();
                         
                         // 应用棋谱数据
                         moveHistory = gameData.moveHistory;
-                        totalMoveCount = gameData.totalMoves || moveHistory.length;
-                        turnNumber = gameData.turnNumber || Math.floor(totalMoveCount / 2) + 1;
-                        currentPlayer = gameData.currentPlayer || (totalMoveCount % 2 === 0 ? 2 : 1);
-                        gameOver = gameData.gameOver || false;
-                        winner = gameData.winner || null;
-                        
-                        // 重建棋盘
-                        for (const move of moveHistory) {
-                            board[move.y][move.x] = move.player;
-                        }
+                        viewedHistoryIndex = null;
+                        rebuildStateFromHistory(moveHistory);
                         
                         // 更新界面
                         renderBoard();
@@ -1959,10 +2101,12 @@
         }
         
         function handleTimeout(player) {
+            stopTimer();
             gameOver = true;
             winner = player === 1 ? 2 : 1;
             updateStatus();
             updateStats();
+            updateActionButtons();
             showMessage(`${player === 1 ? '黑方' : '白方'}超时，对方获胜！`);
         }
         
@@ -2016,6 +2160,11 @@
         // 处理点击
         function handleCellClick(x, y) {
             if (gameOver || board[y][x] !== 0) return;
+
+            if (isBrowsingHistory()) {
+                showMessage('当前处于历史浏览模式，请先点击“从此继续”');
+                return;
+            }
             
             // 人人对战模式：允许任何玩家点击
             if (gameMode === 'human') {
@@ -2026,8 +2175,7 @@
             }
             
             // 人机对战模式：判断是否是人类回合
-            const isHumanTurn = (firstPlayer === 'human' && currentPlayer === 1) || 
-                               (firstPlayer === 'ai' && currentPlayer === 2);
+            const isHumanTurn = currentPlayer !== getAITurnPlayer();
             
             if (!isHumanTurn) {
                 showMessage('现在是AI回合，请点击"AI走棋"按钮');
@@ -2042,6 +2190,10 @@
         
         // 落子
         function makeMove(x, y) {
+            if (isBrowsingHistory()) {
+                return;
+            }
+
             // 停止当前计时器
             stopTimer();
             
@@ -2099,11 +2251,7 @@
             
             updateStatus();
             updateStats();
-            
-            // 如果是AI回合，自动触发
-            if (gameMode === 'ai' && currentPlayer === 2 && !gameOver) {
-                document.getElementById('aiBtn').disabled = false;
-            }
+            updateActionButtons();
         }
         
         // 检查获胜
@@ -2188,11 +2336,8 @@
         
         // AI走棋
         function aiMove() {
-            // 判断是否是AI的回合
-            const isAITurn = (firstPlayer === 'ai' && currentPlayer === 1) || 
-                            (firstPlayer === 'human' && currentPlayer === 2);
-            
-            if (gameOver || !isAITurn) return;
+            if (gameOver || !isAITurn()) return;
+            if (isBrowsingHistory()) return;
             
             document.getElementById('aiBtn').disabled = true;
             showMessage('AI正在思考...');
@@ -2200,94 +2345,163 @@
             // 开始AI的计时器
             startTimer();
             
-            if (aiMode === 'local') {
-                // 本地AI
-                const moves = findBestMoves();
-                
-                // 下第一子
-                if (moves.length > 0) {
-                    setTimeout(() => {
-                        makeMove(moves[0].x, moves[0].y);
-                        
-                        // 如果需要下第二子
-                        const stillAITurn = (firstPlayer === 'ai' && currentPlayer === 1) || 
-                                          (firstPlayer === 'human' && currentPlayer === 2);
-                        if (!gameOver && stillAITurn && moveCount < 2) {
-                            setTimeout(() => {
-                                const moves2 = findBestMoves();
-                                if (moves2.length > 0) {
-                                    makeMove(moves2[0].x, moves2[0].y);
-                                }
-                                document.getElementById('aiBtn').disabled = false;
-                            }, 800);
-                        } else {
-                            document.getElementById('aiBtn').disabled = false;
-                        }
-                    }, 1000);
-                }
+            const moves = findBestMoves();
+            
+            if (moves.length > 0) {
+                setTimeout(() => {
+                    makeMove(moves[0].x, moves[0].y);
+                    
+                    if (!gameOver && isAITurn() && moveCount < 2) {
+                        setTimeout(() => {
+                            const moves2 = findBestMoves();
+                            if (moves2.length > 0) {
+                                makeMove(moves2[0].x, moves2[0].y);
+                            }
+                            updateActionButtons();
+                        }, 800);
+                    } else {
+                        updateActionButtons();
+                    }
+                }, 1000);
             } else {
-                // 远程C++ AI
-                fetchRemoteAIMove();
+                updateActionButtons();
             }
         }
-        
-        // 获取远程C++ AI走法
-        function fetchRemoteAIMove() {
-            // 构建请求数据
-            const requestData = {
-                board: board,
-                player: currentPlayer
-            };
-            
-            // 发送请求到C++服务器
-            fetch('http://localhost:8080/ai/move', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.move) {
-                    // 下第一子
-                    makeMove(data.move.p1.x, data.move.p1.y);
-                    
-                    // 如果需要下第二子
-                    if (!gameOver && currentPlayer === 2 && moveCount < 2) {
-                        setTimeout(() => {
-                            makeMove(data.move.p2.x, data.move.p2.y);
-                            document.getElementById('aiBtn').disabled = false;
-                        }, 500);
-                    } else {
-                        document.getElementById('aiBtn').disabled = false;
+
+        function hasNearbyPiece(x, y, distance = 2) {
+            for (let dy = -distance; dy <= distance; dy++) {
+                for (let dx = -distance; dx <= distance; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (isValid(nx, ny) && board[ny][nx] !== 0) {
+                        return true;
                     }
-                } else {
-                    showMessage('远程AI请求失败');
-                    document.getElementById('aiBtn').disabled = false;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessage('远程AI连接失败，请确保服务器已启动');
-                document.getElementById('aiBtn').disabled = false;
-            });
+            }
+
+            return false;
+        }
+
+        function isOpeningCandidate(x, y) {
+            const centerX = Math.floor(BOARD_SIZE / 2);
+            const centerY = Math.floor(BOARD_SIZE / 2);
+            return Math.abs(x - centerX) <= 2 && Math.abs(y - centerY) <= 2;
+        }
+
+        function getCandidateMoves(limit = 14) {
+            const candidates = [];
+            const recentMoves = moveHistory.slice(-6);
+
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    if (board[y][x] !== 0) continue;
+
+                    let isCandidate = totalMoveCount < 2 ? isOpeningCandidate(x, y) : hasNearbyPiece(x, y, 2);
+
+                    if (!isCandidate && recentMoves.length > 0) {
+                        isCandidate = recentMoves.some(move => Math.abs(move.x - x) <= 2 && Math.abs(move.y - y) <= 2);
+                    }
+
+                    if (isCandidate) {
+                        candidates.push({ x, y });
+                    }
+                }
+            }
+
+            if (candidates.length === 0) {
+                for (let y = 0; y < BOARD_SIZE; y++) {
+                    for (let x = 0; x < BOARD_SIZE; x++) {
+                        if (board[y][x] === 0) {
+                            candidates.push({ x, y });
+                        }
+                    }
+                }
+            }
+
+            if (candidates.length <= limit) {
+                return candidates;
+            }
+
+            return candidates
+                .map(move => ({ ...move, priority: evaluatePosition(move.x, move.y) }))
+                .sort((a, b) => b.priority - a.priority)
+                .slice(0, limit)
+                .map(({ x, y }) => ({ x, y }));
+        }
+
+        function evaluateLinePattern(x, y, player, dx, dy) {
+            let total = 1;
+            let openEnds = 0;
+            let jumpSupport = 0;
+
+            for (let dir = -1; dir <= 1; dir += 2) {
+                let nx = x + dx * dir;
+                let ny = y + dy * dir;
+                let count = 0;
+
+                while (isValid(nx, ny) && board[ny][nx] === player) {
+                    count++;
+                    nx += dx * dir;
+                    ny += dy * dir;
+                }
+
+                total += count;
+
+                if (isValid(nx, ny) && board[ny][nx] === 0) {
+                    openEnds++;
+
+                    const jumpX = nx + dx * dir;
+                    const jumpY = ny + dy * dir;
+                    if (isValid(jumpX, jumpY) && board[jumpY][jumpX] === player) {
+                        jumpSupport++;
+                    }
+                }
+            }
+
+            return { total, openEnds, jumpSupport };
+        }
+
+        function scorePattern(pattern, mode, isDefense = false) {
+            const threatScale = isDefense
+                ? (mode === 'easy' ? 1.35 : mode === 'medium' ? 1.2 : 1.1)
+                : 1;
+
+            let score = 0;
+
+            if (pattern.total >= 6) score = 120000;
+            else if (pattern.total === 5 && pattern.openEnds > 0) score = 25000;
+            else if (pattern.total === 4 && pattern.openEnds === 2) score = 9000;
+            else if (pattern.total === 4 && pattern.openEnds === 1) score = 3200;
+            else if (pattern.total === 3 && pattern.openEnds === 2) score = 1200;
+            else if (pattern.total === 3 && pattern.openEnds === 1) score = 360;
+            else if (pattern.total === 2 && pattern.openEnds === 2) score = 120;
+            else if (pattern.total === 2 && pattern.openEnds === 1) score = 45;
+            else if (pattern.total === 1 && pattern.openEnds === 2) score = 10;
+
+            if (pattern.jumpSupport > 0) {
+                score += pattern.jumpSupport * (pattern.total >= 3 ? 180 : 60);
+            }
+
+            return Math.round(score * threatScale);
         }
         
         // 寻找最佳走法
         function findBestMoves() {
             const moves = [];
+            const aiPlayer = getAITurnPlayer();
+            const opponentPlayer = aiPlayer === 1 ? 2 : 1;
+            const candidateMoves = getCandidateMoves(aiDifficulty === 'hard' ? 16 : 12);
             
             // 1. 检查是否能赢
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
-                    if (board[y][x] === 0) {
-                        board[y][x] = 2;
-                        if (checkWin(x, y, 2)) {
-                            moves.push({ x, y, score: 100000 });
-                        }
-                        board[y][x] = 0;
+                    if (board[y][x] !== 0) continue;
+                    board[y][x] = aiPlayer;
+                    if (checkWin(x, y, aiPlayer)) {
+                        moves.push({ x, y, score: 100000 });
                     }
+                    board[y][x] = 0;
                 }
             }
             if (moves.length > 0) return moves;
@@ -2295,26 +2509,21 @@
             // 2. 阻止对手获胜
             for (let y = 0; y < BOARD_SIZE; y++) {
                 for (let x = 0; x < BOARD_SIZE; x++) {
-                    if (board[y][x] === 0) {
-                        board[y][x] = 1;
-                        if (checkWin(x, y, 1)) {
-                            moves.push({ x, y, score: 90000 });
-                        }
-                        board[y][x] = 0;
+                    if (board[y][x] !== 0) continue;
+                    board[y][x] = opponentPlayer;
+                    if (checkWin(x, y, opponentPlayer)) {
+                        moves.push({ x, y, score: 90000 });
                     }
+                    board[y][x] = 0;
                 }
             }
             if (moves.length > 0) return moves;
             
-            // 3. 评估所有空位
-            for (let y = 0; y < BOARD_SIZE; y++) {
-                for (let x = 0; x < BOARD_SIZE; x++) {
-                    if (board[y][x] === 0) {
-                        const score = evaluatePosition(x, y);
-                        if (score > 0) {
-                            moves.push({ x, y, score });
-                        }
-                    }
+            // 3. 评估高质量候选空位
+            for (const { x, y } of candidateMoves) {
+                const score = evaluatePosition(x, y);
+                if (score > 0) {
+                    moves.push({ x, y, score });
                 }
             }
             
@@ -2354,96 +2563,28 @@
         
         // 评估位置
         function evaluatePosition(x, y) {
-            let score = 0;
             const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+            const aiPlayer = getAITurnPlayer();
+            const opponentPlayer = aiPlayer === 1 ? 2 : 1;
+            let attackScore = 0;
+            let defenseScore = 0;
+            let multiThreats = 0;
             
             for (const [dx, dy] of directions) {
-                // 评估AI（白棋）的得分
-                let aiCount = 0;
-                let aiOpen = 0;
-                
-                for (let dir = -1; dir <= 1; dir += 2) {
-                    let nx = x + dx * dir;
-                    let ny = y + dy * dir;
-                    let count = 0;
-                    let open = true;
-                    
-                    while (isValid(nx, ny) && count < 5) {
-                        if (board[ny][nx] === 2) {
-                            count++;
-                        } else if (board[ny][nx] === 0) {
-                            break;
-                        } else {
-                            open = false;
-                            break;
-                        }
-                        nx += dx * dir;
-                        ny += dy * dir;
-                    }
-                    
-                    aiCount += count;
-                    if (open) aiOpen++;
-                }
-                
-                // 评估对手（黑棋）的威胁
-                let playerCount = 0;
-                let playerOpen = 0;
-                
-                for (let dir = -1; dir <= 1; dir += 2) {
-                    let nx = x + dx * dir;
-                    let ny = y + dy * dir;
-                    let count = 0;
-                    let open = true;
-                    
-                    while (isValid(nx, ny) && count < 5) {
-                        if (board[ny][nx] === 1) {
-                            count++;
-                        } else if (board[ny][nx] === 0) {
-                            break;
-                        } else {
-                            open = false;
-                            break;
-                        }
-                        nx += dx * dir;
-                        ny += dy * dir;
-                    }
-                    
-                    playerCount += count;
-                    if (open) playerOpen++;
-                }
-                
-                // 根据难度调整计分
-                if (aiDifficulty === 'hard') {
-                    // 困难模式：更重视进攻
-                    if (aiCount >= 4) score += 12000;
-                    else if (aiCount === 3) score += 1500;
-                    else if (aiCount === 2) score += 150;
-                    else if (aiCount === 1) score += 20;
-                    
-                    if (playerCount >= 4) score += 8000;
-                    else if (playerCount === 3) score += 800;
-                    else if (playerCount === 2) score += 100;
-                } else if (aiDifficulty === 'medium') {
-                    // 中等模式：平衡进攻和防守
-                    if (aiCount >= 4) score += 10000;
-                    else if (aiCount === 3) score += 1000;
-                    else if (aiCount === 2) score += 100;
-                    else if (aiCount === 1) score += 10;
-                    
-                    if (playerCount >= 4) score += 6000;
-                    else if (playerCount === 3) score += 600;
-                    else if (playerCount === 2) score += 60;
-                } else {
-                    // 简单模式：更重视防守
-                    if (aiCount >= 4) score += 8000;
-                    else if (aiCount === 3) score += 800;
-                    else if (aiCount === 2) score += 80;
-                    else if (aiCount === 1) score += 8;
-                    
-                    if (playerCount >= 4) score += 10000;
-                    else if (playerCount === 3) score += 1000;
-                    else if (playerCount === 2) score += 100;
-                }
+                const attackPattern = evaluateLinePattern(x, y, aiPlayer, dx, dy);
+                const defensePattern = evaluateLinePattern(x, y, opponentPlayer, dx, dy);
+
+                attackScore += scorePattern(attackPattern, aiDifficulty, false);
+                defenseScore += scorePattern(defensePattern, aiDifficulty, true);
+
+                if (attackPattern.total >= 3 && attackPattern.openEnds > 0) multiThreats++;
+                if (defensePattern.total >= 3 && defensePattern.openEnds > 0) multiThreats++;
+            }
+
+            let score = attackScore + defenseScore;
+
+            if (multiThreats >= 2) {
+                score += aiDifficulty === 'hard' ? 700 : 500;
             }
             
             // 优先选择靠近已有棋子的位置
@@ -2458,13 +2599,14 @@
                     }
                 }
             }
-            score += nearPieces * 5;
+            score += nearPieces * 6;
             
-            // 中心位置加分
+            // 中心位置加分只在开局阶段更明显
             const centerX = Math.floor(BOARD_SIZE / 2);
             const centerY = Math.floor(BOARD_SIZE / 2);
             const distToCenter = Math.abs(x - centerX) + Math.abs(y - centerY);
-            score += Math.max(0, 20 - distToCenter);
+            const centerWeight = totalMoveCount < 12 ? 18 : totalMoveCount < 30 ? 8 : 3;
+            score += Math.max(0, centerWeight - distToCenter);
             
             return score;
         }
@@ -2490,6 +2632,11 @@
                 statusEl.textContent = currentPlayer === 1 ? '黑棋' : '白棋';
                 statusEl.className = `status-value ${currentPlayer === 1 ? 'black-turn' : 'white-turn'}`;
                 
+                if (isBrowsingHistory()) {
+                    moveInfoEl.textContent = `历史浏览：第 ${viewedHistoryIndex + 1} 步`;
+                    return;
+                }
+
                 if (gameMode === 'human') {
                     // 人人对战模式
                     if (isFirstMove) {
@@ -2500,9 +2647,7 @@
                 } else {
                     // 人机对战模式
                     // 判断当前是谁的回合
-                    const isAITurn = (firstPlayer === 'ai' && currentPlayer === 1) || 
-                                    (firstPlayer === 'human' && currentPlayer === 2);
-                    const turnText = isAITurn ? 'AI' : '人类';
+                    const turnText = isAITurn() ? 'AI' : '人类';
                     
                     if (isFirstMove) {
                         moveInfoEl.textContent = `${turnText}回合：黑方第一手下 1 子`;
@@ -2534,11 +2679,11 @@
         // 重新开始
         function restartGame() {
             initGame();
-            if (gameMode === 'ai') {
-                document.getElementById('aiBtn').disabled = false;
-            } else {
-                document.getElementById('aiBtn').disabled = true;
+
+            if (isAITurn()) {
+                setTimeout(() => aiMove(), 300);
             }
+
             showMessage('游戏已重置');
         }
         
