@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>六子棋 - Connect6</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/connect6.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="board-section">
+            <div class="board-header">
+                <h1 class="board-title">六子棋</h1>
+                <p class="board-subtitle">静局对弈，落子见势</p>
+            </div>
+            <div class="board-wrapper">
+                <div class="board-container">
+                    <div class="x-axis" id="xAxis"></div>
+                    <div class="board-row">
+                        <div class="y-axis" id="yAxis"></div>
+                        <div class="board" id="board"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="status-card">
+                <div class="status-label">当前回合</div>
+                <div class="status-value black-turn" id="status">黑棋</div>
+                <div class="move-info" id="moveInfo">黑方第一手：下 1 子</div>
+                <div class="ai-insight" id="aiInsight">AI决策说明：等待本回合分析</div>
+            </div>
+            
+            <div class="timer-card">
+                <div class="timer-header">时间限制</div>
+                <div class="timer-container">
+                    <div class="timer-item">
+                        <div class="timer-label">黑方</div>
+                        <div class="timer" id="blackTimer">10:00</div>
+                    </div>
+                    <div class="timer-item">
+                        <div class="timer-label">白方</div>
+                        <div class="timer" id="whiteTimer">10:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-card">
+                <div class="settings-title">对局设置</div>
+                <div class="setting-row">
+                    <div class="difficulty-label">AI难度</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="difficultyEasyBtn">简单</button>
+                        <button class="difficulty-btn" id="difficultyMediumBtn">中等</button>
+                        <button class="difficulty-btn" id="difficultyHardBtn">困难</button>
+                        <button class="difficulty-btn difficulty-btn-special" id="difficultyMasterBtn">大师</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="difficulty-label">游戏模式</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="gameModeAiBtn">人机对战</button>
+                        <button class="difficulty-btn" id="gameModeHumanBtn">人人对战</button>
+                    </div>
+                </div>
+                <div class="setting-row setting-row-compact">
+                    <div class="difficulty-label">先后手</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="humanFirstBtn">人类先手</button>
+                        <button class="difficulty-btn" id="aiFirstBtn">AI先手</button>
+                    </div>
+                </div>
+                <div class="setting-row setting-row-compact">
+                    <div class="difficulty-label">队名信息</div>
+                    <div class="team-inputs">
+                        <input class="team-input" id="blackTeamInput" type="text" placeholder="黑方队名">
+                        <input class="team-input" id="whiteTeamInput" type="text" placeholder="白方队名">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="button-group button-group-primary">
+                <button class="btn btn-primary" id="aiBtn">
+                    <span>AI 走棋</span>
+                </button>
+                <button class="btn btn-secondary" id="restartBtn">
+                    <span>重新开始</span>
+                </button>
+            </div>
+            
+            <div id="aiProgressContainer">
+                <div id="aiProgressBar"></div>
+            </div>
+            
+            <div class="button-group button-group-tools">
+                <button class="btn btn-secondary" id="exportBtn">
+                    <span>导出棋谱</span>
+                </button>
+                <button class="btn btn-secondary" id="importBtn">
+                    <span>导入棋谱</span>
+                </button>
+                <button class="btn btn-secondary" id="notationBtn">
+                    <span>棋子标记</span>
+                </button>
+                <button class="btn btn-secondary" id="continueBtn" disabled>
+                    <span>从此继续</span>
+                </button>
+                <button class="btn btn-secondary" id="returnLatestBtn" disabled>
+                    <span>返回最新</span>
+                </button>
+                <button class="btn btn-secondary" id="undoBtn" disabled>
+                    <span>悔棋</span>
+                </button>
+            </div>
+            
+            <div class="history-panel">
+                <div class="history-title">
+                    <span>📋</span>
+                    <span>历史记录</span>
+                    <span class="history-mode-badge" id="historyModeBadge">当前局面</span>
+                </div>
+                <ul class="history-list" id="historyList"></ul>
+            </div>
+            
+            <div class="stats-card">
+                <div class="stats-title">局面概览</div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="blackCount">0</div>
+                        <div class="stat-label">黑棋数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="whiteCount">0</div>
+                        <div class="stat-label">白棋数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalMoves">0</div>
+                        <div class="stat-label">总步数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="turnCount">1</div>
+                        <div class="stat-label">回合数</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-title">简要规则</div>
+                <ul class="info-list">
+                    <li>黑棋先行，首手仅落一子。</li>
+                    <li>之后双方每回合各落两子。</li>
+                    <li>任一方向先成六连即获胜。</li>
+                </ul>
+            </div>
+
+            <div class="coach-panel" id="coachPanel" hidden>
+                <div class="coach-title">局后建议</div>
+                <div class="coach-hint">快捷键：Ctrl + Shift + K</div>
+                <div class="coach-content" id="coachContent">当前暂无建议。</div>
+                <div class="coach-actions">
+                    <div class="difficulty-label">策略风格</div>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" id="profileBalancedBtn">均衡</button>
+                        <button class="difficulty-btn" id="profileSolidBtn">稳健</button>
+                        <button class="difficulty-btn" id="profileAggressiveBtn">进攻</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/connect6.js"></script>
+</body>
+</html>
+
+

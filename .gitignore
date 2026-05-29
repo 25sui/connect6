@@ -1,0 +1,22 @@
+# 排除所有文档文件
+*.md
+*.txt
+*.doc
+*.docx
+
+# 排除IDE配置目录
+.idea/
+.vscode/
+*.iml
+
+# 排除文档和配置目录
+.trae/
+.traey/
+
+# 排除系统文件
+.DS_Store
+Thumbs.db
+
+# 排除临时文件
+*.tmp
+*.log
