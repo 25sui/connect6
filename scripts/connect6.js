@@ -1,24 +1,29 @@
+// 六子棋游戏核心逻辑与AI算法实现
 // ========== 配置与状态 ==========
+// 棋盘大小：19×19标准
 const BOARD_SIZE = 19;
+// 胜利条件：连成6子
 const WIN_COUNT = 6;
 
+// AI策略配置：均衡/稳健/进攻三种风格
+// 参数控制
 const AI_PROFILES = {
-    balanced: {
-        threatBonusHigh: 2600,
-        threatBonusMedium: 1200,
-        defensiveCoverageWeight: 0.05,
-        defensiveThreatBonus: 500,
-        pairRiskWeight: 0.16,
-        pairLossPenalty: 22000,
-        sameLineBonus: 260,
-        closeDistanceBonus: 320,
-        mediumDistanceBonus: 120,
-        farDistancePenalty: 180
+    balanced: {  // 均衡策略
+        threatBonusHigh: 2600,    // 高威胁奖励
+        threatBonusMedium: 1200,  // 中等威胁奖励
+        defensiveCoverageWeight: 0.05,  // 防守覆盖权重
+        defensiveThreatBonus: 500,       // 防守威胁奖励
+        pairRiskWeight: 0.16,    // 双落子风险权重
+        pairLossPenalty: 22000,  // 双落子损失惩罚
+        sameLineBonus: 260,      // 同线奖励
+        closeDistanceBonus: 320, // 近距离协同奖励
+        mediumDistanceBonus: 120,// 中距离协同奖励
+        farDistancePenalty: 180  // 远距离惩罚
     },
-    solid: {
+    solid: {  // 稳健策略：更注重防守
         threatBonusHigh: 2200,
         threatBonusMedium: 1000,
-        defensiveCoverageWeight: 0.08,
+        defensiveCoverageWeight: 0.08,  // 更高的防守权重
         defensiveThreatBonus: 800,
         pairRiskWeight: 0.22,
         pairLossPenalty: 28000,
@@ -27,10 +32,10 @@ const AI_PROFILES = {
         mediumDistanceBonus: 100,
         farDistancePenalty: 220
     },
-    aggressive: {
+    aggressive: {  // 进攻策略：更注重进攻
         threatBonusHigh: 3200,
         threatBonusMedium: 1600,
-        defensiveCoverageWeight: 0.04,
+        defensiveCoverageWeight: 0.04,  // 更低的防守权重
         defensiveThreatBonus: 350,
         pairRiskWeight: 0.1,
         pairLossPenalty: 18000,
@@ -41,6 +46,7 @@ const AI_PROFILES = {
     }
 };
 
+// AI思考时间配置
 const AI_THINK_DELAY = {
     easy: 2000,
     medium: 5000,
@@ -48,23 +54,34 @@ const AI_THINK_DELAY = {
     master: 15000
 };
 
-// ========== 强化学习组件 ==========
+//强化学习组件
+// 基于简单神经网络的强化学习AI实现
+// 包含策略网络（选择落子）和价值网络（评估局面）
 class ReinforcementLearning {
     constructor() {
+        // 策略网络：输入棋盘状态，输出每个位置的落子概率
         this.policyNetwork = null;
+        // 价值网络：输入棋盘状态，输出当前玩家的获胜概率
         this.valueNetwork = null;
+        // 训练数据缓存
         this.trainingData = [];
+        // 训练回合数
         this.trainingEpisodes = 0;
+        // 最佳模型保存
         this.bestModel = null;
+        // 训练超参数配置
         this.trainingConfig = {
-            learningRate: 0.001,
-            discountFactor: 0.99,
-            explorationRate: 0.2,
-            batchSize: 32,
-            epochs: 10
+            learningRate: 0.001,     // 学习率
+            discountFactor: 0.99,    // 折扣因子（用于计算未来奖励的当前价值）
+            explorationRate: 0.2,    // 探索率（ε-greedy策略）
+            batchSize: 32,           // 批次大小
+            epochs: 10               // 每批训练的轮数
         };
     }
 
+    // 编码棋盘状态：将当前棋盘转换为神经网络输入向量
+    // 输入：player - 当前玩家（1或2）
+    // 输出：一维数组，1表示当前玩家棋子，-1表示对手，0表示空位
     encodeState(player) {
         const state = [];
         const opponentPlayer = player === 1 ? 2 : 1;
@@ -84,34 +101,41 @@ class ReinforcementLearning {
         return state;
     }
 
+    // 计算奖励函数
+    // 获胜得+1，失败得-1，平局得0
     calculateReward(player, winner) {
         if (winner === player) return 1;
         if (winner === (player === 1 ? 2 : 1)) return -1;
         return 0;
     }
 
+    // 创建策略网络结构
+    // 答辩要点：三层全连接网络，输入361维（19×19），输出361维（softmax概率）
     createPolicyNetwork() {
         return {
             layers: [
-                { type: 'dense', inputSize: BOARD_SIZE * BOARD_SIZE, outputSize: 256, activation: 'relu' },
-                { type: 'dense', inputSize: 256, outputSize: 128, activation: 'relu' },
-                { type: 'dense', inputSize: 128, outputSize: BOARD_SIZE * BOARD_SIZE, activation: 'softmax' }
+                { type: 'dense', inputSize: BOARD_SIZE * BOARD_SIZE, outputSize: 256, activation: 'relu' },  // 第一层：256隐藏单元
+                { type: 'dense', inputSize: 256, outputSize: 128, activation: 'relu' },                   // 第二层：128隐藏单元
+                { type: 'dense', inputSize: 128, outputSize: BOARD_SIZE * BOARD_SIZE, activation: 'softmax' }  // 输出层：softmax概率
             ],
-            weights: this.initializeWeights()
+            weights: this.initializeWeights()  // 初始化权重
         };
     }
 
+    // 创建价值网络结构
+    // 答辩要点：三层全连接网络，输出单一值（tanh归一化到[-1,1]）
     createValueNetwork() {
         return {
             layers: [
                 { type: 'dense', inputSize: BOARD_SIZE * BOARD_SIZE, outputSize: 256, activation: 'relu' },
                 { type: 'dense', inputSize: 256, outputSize: 128, activation: 'relu' },
-                { type: 'dense', inputSize: 128, outputSize: 1, activation: 'tanh' }
+                { type: 'dense', inputSize: 128, outputSize: 1, activation: 'tanh' }  // 输出：局面价值
             ],
             weights: this.initializeWeights()
         };
     }
 
+    // 初始化网络权重：使用Xavier/Glorot初始化
     initializeWeights() {
         const weights = [];
         const layers = [BOARD_SIZE * BOARD_SIZE, 256, 128, BOARD_SIZE * BOARD_SIZE];
@@ -121,6 +145,7 @@ class ReinforcementLearning {
             for (let j = 0; j < layers[i + 1]; j++) {
                 w.push([]);
                 for (let k = 0; k < layers[i]; k++) {
+                    // Xavier初始化：范围为[-sqrt(6/(in+out)), sqrt(6/(in+out))]
                     w[j].push((Math.random() - 0.5) * 2 * Math.sqrt(6 / (layers[i] + layers[i + 1])));
                 }
             }
@@ -129,6 +154,7 @@ class ReinforcementLearning {
         return weights;
     }
 
+    // 前向传播：计算网络输出
     forward(network, input) {
         let output = [...input];
         
@@ -137,23 +163,26 @@ class ReinforcementLearning {
             const weights = network.weights[i];
             const newOutput = [];
             
+            // 计算每层的加权和
             for (let j = 0; j < weights.length; j++) {
                 let sum = 0;
                 for (let k = 0; k < weights[j].length; k++) {
                     sum += output[k] * weights[j][k];
                 }
                 
+                // 应用激活函数
                 if (layer.activation === 'relu') {
-                    newOutput.push(Math.max(0, sum));
+                    newOutput.push(Math.max(0, sum));  // ReLU激活
                 } else if (layer.activation === 'softmax') {
-                    newOutput.push(Math.exp(sum));
+                    newOutput.push(Math.exp(sum));     // softmax先求指数
                 } else if (layer.activation === 'tanh') {
-                    newOutput.push(Math.tanh(sum));
+                    newOutput.push(Math.tanh(sum));    // tanh激活
                 } else {
                     newOutput.push(sum);
                 }
             }
             
+            // softmax归一化
             if (layer.activation === 'softmax') {
                 const total = newOutput.reduce((a, b) => a + b, 0);
                 output = newOutput.map(v => v / total);
@@ -165,21 +194,25 @@ class ReinforcementLearning {
         return output;
     }
 
+    // 预测策略：输出各位置的落子概率
     predictPolicy(state) {
         if (!this.policyNetwork) return null;
         return this.forward(this.policyNetwork, state);
     }
 
+    // 预测价值：输出当前局面的价值
     predictValue(state) {
         if (!this.valueNetwork) return 0;
         const output = this.forward(this.valueNetwork, state);
         return output[0];
     }
 
+    // 选择落子：ε-greedy策略（探索与利用平衡）
     selectMove(state, exploration = true) {
         const policy = this.predictPolicy(state);
         if (!policy) return null;
         
+        // 探索阶段：随机选择（概率为explorationRate）
         if (exploration && Math.random() < this.trainingConfig.explorationRate) {
             const candidates = [];
             for (let i = 0; i < policy.length; i++) {
@@ -193,6 +226,7 @@ class ReinforcementLearning {
             return candidates[Math.floor(Math.random() * candidates.length)];
         }
         
+        // 利用阶段：选择概率最高的落子
         let bestMove = null;
         let bestProb = -1;
         for (let i = 0; i < policy.length; i++) {
@@ -206,11 +240,12 @@ class ReinforcementLearning {
         return bestMove;
     }
 
+    // 训练函数：进行自我对弈并更新网络
     train(episodes = 100, onProgress = null) {
         console.log(`开始训练，共 ${episodes} 局...`);
         
         for (let episode = 0; episode < episodes; episode++) {
-            this.selfPlay();
+            this.selfPlay();  // 自我对弈一局
             this.trainingEpisodes++;
             
             // 关键修改：每局训练后立即更新网络并清空数据
@@ -236,6 +271,7 @@ class ReinforcementLearning {
         this.trainingEpisodes = episodes;
     }
 
+    // 保存检查点：将模型压缩后保存到localStorage
     saveCheckpoint() {
         try {
             const checkpoint = {
@@ -248,7 +284,7 @@ class ReinforcementLearning {
             
             const compressed = this.compressCheckpoint(checkpoint);
             
-            // 尝试保存
+            // 尝试保存到浏览器存储
             localStorage.setItem('connect6_rl_checkpoint', compressed);
             console.log(`检查点已保存 (${this.trainingEpisodes}局, 大小: ${(compressed.length / 1024).toFixed(2)} KB)`);
             return true;
@@ -279,6 +315,7 @@ class ReinforcementLearning {
         }
     }
 
+    // 清理旧的localStorage数据
     clearOldData() {
         let cleared = 0;
         for (const key of Object.keys(localStorage)) {
@@ -290,6 +327,7 @@ class ReinforcementLearning {
         console.log(`已清理 ${cleared} 个旧数据文件`);
     }
 
+    // 加载检查点
     loadCheckpoint() {
         const saved = localStorage.getItem('connect6_rl_checkpoint');
         if (saved) {
@@ -309,6 +347,7 @@ class ReinforcementLearning {
         return false;
     }
 
+    // 压缩检查点数据：将权重数组扁平化后base64编码
     compressCheckpoint(checkpoint) {
         const model = {
             policyWeights: this.flattenWeights(checkpoint.policyNetwork?.weights || []),
@@ -322,6 +361,7 @@ class ReinforcementLearning {
         return this.encodeString(jsonStr);
     }
 
+    // 解压检查点数据
     decompressCheckpoint(compressed) {
         const jsonStr = this.decodeString(compressed);
         const model = JSON.parse(jsonStr);
@@ -341,9 +381,10 @@ class ReinforcementLearning {
         };
     }
 
+    // 自我对弈：AI自己与自己下棋，收集训练数据
     selfPlay() {
         const tempBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
-        const history = [];
+        const history = [];  // 记录对局过程
         let currentPlayer = 1;
         let gameOver = false;
         let winner = null;
@@ -363,6 +404,7 @@ class ReinforcementLearning {
             tempBoard[move.y][move.x] = currentPlayer;
             history.push({ state, policy, player: currentPlayer, move });
             
+            // 检查是否获胜
             if (this.checkWinOnBoard(tempBoard, move.x, move.y, currentPlayer)) {
                 winner = currentPlayer;
                 gameOver = true;
@@ -371,20 +413,24 @@ class ReinforcementLearning {
 
             totalMoveCount++;
             moveCount++;
+            // 六子棋规则：第一手1子，之后每手2子
             if (totalMoveCount > 1 && moveCount >= 2) {
                 moveCount = 0;
                 currentPlayer = currentPlayer === 1 ? 2 : 1;
             }
             
+            // 棋盘下满平局
             if (totalMoveCount > BOARD_SIZE * BOARD_SIZE) {
                 gameOver = true;
                 break;
             }
         }
 
+        // 将对局数据加入训练集
         this.addTrainingData(history, winner);
     }
 
+    // 编码棋盘状态（用于自我对弈）
     encodeBoard(boardState, player) {
         const state = [];
         const opponent = player === 1 ? 2 : 1;
@@ -403,6 +449,7 @@ class ReinforcementLearning {
         return state;
     }
 
+    // 获取随机策略（当网络未训练时使用）
     getRandomPolicy(boardState) {
         const policy = Array(BOARD_SIZE * BOARD_SIZE).fill(0);
         let count = 0;
@@ -422,6 +469,7 @@ class ReinforcementLearning {
         return policy;
     }
 
+    // 根据策略选择落子：带采样的概率选择
     selectMoveFromPolicy(policy, boardState) {
         const candidates = [];
         for (let i = 0; i < policy.length; i++) {
@@ -434,6 +482,7 @@ class ReinforcementLearning {
         
         if (candidates.length === 0) return null;
         
+        // 轮盘赌采样
         const total = candidates.reduce((sum, c) => sum + c.prob, 0);
         let r = Math.random() * total;
         
@@ -447,12 +496,14 @@ class ReinforcementLearning {
         return candidates[0];
     }
 
+    // 在指定棋盘上检查获胜
     checkWinOnBoard(boardState, x, y, player) {
         const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
         
         for (const [dx, dy] of directions) {
             let count = 1;
             
+            // 向一个方向延伸
             for (let i = 1; i <= 5; i++) {
                 const nx = x + dx * i;
                 const ny = y + dy * i;
@@ -461,6 +512,7 @@ class ReinforcementLearning {
                 count++;
             }
             
+            // 向相反方向延伸
             for (let i = 1; i <= 5; i++) {
                 const nx = x - dx * i;
                 const ny = y - dy * i;
@@ -475,11 +527,13 @@ class ReinforcementLearning {
         return false;
     }
 
+    // 添加训练数据：计算每个状态的回报（使用折扣因子）
     addTrainingData(history, winner) {
         for (let i = history.length - 1; i >= 0; i--) {
             const item = history[i];
             const reward = this.calculateReward(item.player, winner);
             const nextValue = i === history.length - 1 ? 0 : history[i + 1].value || 0;
+            // 贝尔曼方程：当前价值 = 即时奖励 + 折扣因子*下一个状态的价值
             const value = reward + this.trainingConfig.discountFactor * nextValue;
             
             item.value = value;
@@ -487,17 +541,19 @@ class ReinforcementLearning {
         }
     }
 
+    // 更新网络权重：使用反向传播
     updateNetworks() {
         const batch = this.sampleBatch();
         
         for (let epoch = 0; epoch < this.trainingConfig.epochs; epoch++) {
-            this.trainPolicyNetwork(batch);
-            this.trainValueNetwork(batch);
+            this.trainPolicyNetwork(batch);  // 训练策略网络
+            this.trainValueNetwork(batch);   // 训练价值网络
         }
         
-        this.trainingData = [];
+        this.trainingData = [];  // 清空训练数据
     }
 
+    // 采样批次数据
     sampleBatch() {
         const batch = [];
         for (let i = 0; i < this.trainingConfig.batchSize; i++) {
@@ -507,6 +563,7 @@ class ReinforcementLearning {
         return batch;
     }
 
+    // 训练策略网络：最大化采取的动作的概率
     trainPolicyNetwork(batch) {
         if (!this.policyNetwork) {
             this.policyNetwork = this.createPolicyNetwork();
@@ -518,6 +575,7 @@ class ReinforcementLearning {
             const output = this.forward(this.policyNetwork, item.state);
             const target = [...output];
             
+            // 对于采取的动作，将目标概率设为1（类似策略梯度）
             const moveIdx = item.move.y * BOARD_SIZE + item.move.x;
             target[moveIdx] = 1;
             
@@ -525,6 +583,7 @@ class ReinforcementLearning {
         }
     }
 
+    // 训练价值网络：逼近状态价值
     trainValueNetwork(batch) {
         if (!this.valueNetwork) {
             this.valueNetwork = this.createValueNetwork();
@@ -534,17 +593,19 @@ class ReinforcementLearning {
         
         for (const item of batch) {
             const output = this.forward(this.valueNetwork, item.state);
-            const target = [item.value];
+            const target = [item.value];  // 目标为计算的价值
             
             this.backpropagate(this.valueNetwork, item.state, target, lr);
         }
     }
 
+    // 反向传播算法：计算梯度并更新权重
     backpropagate(network, input, target, lr) {
         const outputs = [];
         let current = [...input];
         outputs.push(current);
         
+        // 前向传播，记录每层输出
         for (let i = 0; i < network.layers.length; i++) {
             const layer = network.layers[i];
             const weights = network.weights[i];
@@ -576,11 +637,13 @@ class ReinforcementLearning {
             outputs.push(current);
         }
         
+        // 计算输出层误差
         let errors = [];
         for (let i = 0; i < target.length; i++) {
             errors.push(target[i] - current[i]);
         }
         
+        // 反向传播误差，更新权重
         for (let i = network.layers.length - 1; i >= 0; i--) {
             const layer = network.layers[i];
             const weights = network.weights[i];
@@ -592,12 +655,14 @@ class ReinforcementLearning {
             for (let j = 0; j < weights.length; j++) {
                 let gradient = errors[j];
                 
+                // 计算激活函数导数
                 if (layer.activation === 'relu') {
                     gradient *= currOutput[j] > 0 ? 1 : 0;
                 } else if (layer.activation === 'tanh') {
                     gradient *= (1 - currOutput[j] * currOutput[j]);
                 }
                 
+                // 更新权重
                 for (let k = 0; k < weights[j].length; k++) {
                     weights[j][k] += lr * gradient * prevOutput[k];
                     newErrors[k] += gradient * weights[j][k];
@@ -608,6 +673,7 @@ class ReinforcementLearning {
         }
     }
 
+    // 保存模型
     saveModel(filename) {
         try {
             const compressed = this.compressModel();
@@ -621,6 +687,7 @@ class ReinforcementLearning {
         }
     }
 
+    // 加载模型
     loadModel(filename) {
         const saved = localStorage.getItem(filename);
         if (saved) {
@@ -639,6 +706,7 @@ class ReinforcementLearning {
         return false;
     }
 
+    // 压缩模型：将权重扁平化并量化为整数（减少存储空间）
     compressModel() {
         const model = {
             policyWeights: this.flattenWeights(this.policyNetwork?.weights || []),
@@ -651,6 +719,7 @@ class ReinforcementLearning {
         return this.encodeString(jsonStr);
     }
 
+    // 解压模型
     decompressModel(compressed) {
         const jsonStr = this.decodeString(compressed);
         const model = JSON.parse(jsonStr);
@@ -668,11 +737,13 @@ class ReinforcementLearning {
         };
     }
 
+    // 扁平化权重数组：将多维数组转为一维
     flattenWeights(weights) {
         const flat = [];
         for (const layer of weights) {
             for (const neuron of layer) {
                 for (const weight of neuron) {
+                    // 量化：将浮点数乘以32767后取整，节省空间
                     flat.push(Math.round(weight * 32767));
                 }
             }
@@ -680,6 +751,7 @@ class ReinforcementLearning {
         return flat;
     }
 
+    // 恢复权重数组
     unflattenWeights(flat, shape) {
         const weights = [];
         let idx = 0;
@@ -689,6 +761,7 @@ class ReinforcementLearning {
             for (let i = 0; i < outputSize; i++) {
                 const neuron = [];
                 for (let j = 0; j < inputSize; j++) {
+                    // 反量化
                     neuron.push(flat[idx++] / 32767);
                 }
                 layer.push(neuron);
@@ -698,6 +771,7 @@ class ReinforcementLearning {
         return weights;
     }
 
+    // 字符串编码：使用base64
     encodeString(str) {
         const uint8array = new TextEncoder().encode(str);
         let binary = '';
@@ -707,6 +781,7 @@ class ReinforcementLearning {
         return btoa(binary);
     }
 
+    // 字符串解码
     decodeString(encoded) {
         const binary = atob(encoded);
         const uint8array = new Uint8Array(binary.length);
@@ -717,14 +792,18 @@ class ReinforcementLearning {
     }
 }
 
+// 创建强化学习实例
 let rlAgent = new ReinforcementLearning();
-let aiMode = 'classic'; // classic | rl
+// AI模式：'classic'为经典α-β搜索，'rl'为强化学习
+let aiMode = 'classic';
 
+// 切换AI模式
 function setAIMode(mode) {
     aiMode = mode;
     showMessage(`AI模式已切换为${mode === 'rl' ? '强化学习' : '经典算法'}`);
 }
 
+// 启动强化学习训练
 function startRLTraining(episodes) {
     showMessage(`开始强化学习训练，共${episodes}局...`);
     
@@ -745,6 +824,7 @@ function startRLTraining(episodes) {
     showMessage(`训练完成！共训练${rlAgent.trainingEpisodes}局`);
 }
 
+// 继续强化学习的辅助函数
 function resumeTraining(additionalEpisodes) {
     // 先尝试加载检查点
     if (!rlAgent.loadCheckpoint()) {
@@ -812,6 +892,7 @@ function loadRLModel() {
     }
 }
 
+// 获取强化学习的落子
 function getRLMove() {
     const aiPlayer = getAITurnPlayer();
     const state = rlAgent.encodeState(aiPlayer);
@@ -819,6 +900,8 @@ function getRLMove() {
     return move;
 }
 
+// 开局库 
+// 包含多种常见开局策略，用于加快游戏初期的决策速度
 const OPENING_BOOK = [
     { name: '天元', moves: [{ x: 9, y: 9 }] },
     { name: '天元+星位', moves: [{ x: 9, y: 9 }, { x: 10, y: 10 }] },
@@ -838,37 +921,40 @@ const OPENING_BOOK = [
     { name: '高挂', moves: [{ x: 9, y: 9 }, { x: 9, y: 6 }] }
 ];
 
-let board = [];
-let currentPlayer = 1; // 1: 黑棋, 2: 白棋
-let gameOver = false;
-let winner = null;
+//  全局游戏状态
+let board = [];  // 棋盘状态，0为空，1为黑，2为白
+let currentPlayer = 1; // 当前玩家
+let gameOver = false; // 游戏是否结束
+let winner = null;  // 获胜者
 let moveCount = 0; // 当前回合已下子数
 let totalMoveCount = 0; // 总步数
 let turnNumber = 1; // 回合数
 let lastMove = null; // 最后一步
 
-let aiDifficulty = 'easy';
-let aiProfile = 'balanced';
-let firstPlayer = 'human'; // human | ai
-let gameMode = 'ai'; // ai | human
+let aiDifficulty = 'easy'; // AI难度
+let aiProfile = 'balanced'; // AI策略配置
+let firstPlayer = 'human'; // 先手玩家
+let gameMode = 'ai'; // 游戏模式：人机或人人
 let lastAIDecision = '等待本回合分析';
 let coachSuggestion = '当前暂无建议。';
 let coachPanelVisible = false;
 let opponentProfile = null;
 
-let moveHistory = [];
-let viewedHistoryIndex = null; // null 表示当前对局
+let moveHistory = []; // 历史记录
+let viewedHistoryIndex = null; // 浏览历史的索引
 let notationEnabled = false;
 
-let blackTime = 900;
-let whiteTime = 900;
-let timerInterval = null;
+let blackTime = 900; // 黑方时间（秒）
+let whiteTime = 900; // 白方时间（秒）
+let timerInterval = null; // 计时器
 let isTimerRunning = false;
+let timerStartTime = null;
+let timerStartValue = 0;
 
 const GAME_CODE = 'C6';
 const GAME_NAME = 'Connect6';
 
-// ========== 状态辅助 ==========
+// ========== 状态辅助函数 ==========
 function updateModeButtons(selectedButton, buttonIds) {
     buttonIds.forEach(id => {
         const button = document.getElementById(id);
@@ -878,28 +964,34 @@ function updateModeButtons(selectedButton, buttonIds) {
     });
 }
 
+// 获取AI执子方
 function getAITurnPlayer() {
     return firstPlayer === 'ai' ? 1 : 2;
 }
 
+// 获取当前AI策略配置
 function getCurrentAIProfile() {
     return AI_PROFILES[aiProfile] || AI_PROFILES.balanced;
 }
 
+// 检查是否是AI的回合
 function isAITurn() {
     return gameMode === 'ai' && currentPlayer === getAITurnPlayer();
 }
 
+// 获取当前回合已下子数
 function getStonesPlayedInCurrentTurn(totalMoves) {
     if (totalMoves <= 0) return 0;
     if (totalMoves === 1) return 1;
     return totalMoves % 2 === 0 ? 1 : 2;
 }
 
+// 检查是否在浏览历史
 function isBrowsingHistory() {
     return viewedHistoryIndex !== null;
 }
 
+// 验证棋谱格式
 function validateMoveHistory(history) {
     if (!Array.isArray(history)) {
         throw new Error('无效的棋谱格式');
@@ -929,6 +1021,7 @@ function validateMoveHistory(history) {
     });
 }
 
+// 从历史记录重建棋盘状态
 function rebuildStateFromHistory(history, upToIndex = history.length - 1) {
     board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
     currentPlayer = 1;
@@ -974,7 +1067,7 @@ function rebuildStateFromHistory(history, upToIndex = history.length - 1) {
     }
 }
 
-// ========== UI 辅助 ==========
+// ========== UI 辅助函数 ==========
 function updateHistoryModeBadge() {
     const badge = document.getElementById('historyModeBadge');
     if (!badge) return;
@@ -1010,6 +1103,7 @@ function toggleCoachPanel(forceVisible = null) {
     panel.hidden = !coachPanelVisible;
 }
 
+// 生成教练建议：分析对手风格并给出建议
 function generateCoachSuggestion() {
     if (!gameOver || gameMode !== 'ai') {
         updateCoachSuggestion('当前暂无建议。');
@@ -1045,6 +1139,7 @@ function generateCoachSuggestion() {
     }
 }
 
+// 分析对手下棋风格
 function analyzeOpponentProfile() {
     const aiPlayer = getAITurnPlayer();
     const opponentPlayer = aiPlayer === 1 ? 2 : 1;
@@ -1124,7 +1219,7 @@ function showMessage(msg) {
     }, 3000);
 }
 
-// ========== 计时器 ==========
+// ========== 计时器系统 ==========
 function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -1272,24 +1367,26 @@ function startTimer() {
     if (isTimerRunning) return;
 
     isTimerRunning = true;
+    timerStartTime = Date.now();
+    timerStartValue = currentPlayer === 1 ? blackTime : whiteTime;
+
     timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - timerStartTime) / 1000);
+        const remaining = Math.max(0, timerStartValue - elapsed);
+
         if (currentPlayer === 1) {
-            blackTime--;
-            if (blackTime <= 0) {
-                blackTime = 0;
-                stopTimer();
-                handleTimeout(1);
-            }
+            blackTime = remaining;
         } else {
-            whiteTime--;
-            if (whiteTime <= 0) {
-                whiteTime = 0;
-                stopTimer();
-                handleTimeout(2);
-            }
+            whiteTime = remaining;
         }
+
+        if (remaining <= 0) {
+            stopTimer();
+            handleTimeout(currentPlayer);
+        }
+
         updateTimerDisplay();
-    }, 1000);
+    }, 100);
 }
 
 // ========== 渲染与显示 ==========
@@ -1447,22 +1544,26 @@ function updateStats() {
 }
 
 // ========== 规则与棋盘逻辑 ==========
+// 检查坐标是否在棋盘范围内
 function isValid(x, y) {
     return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE;
 }
 
+// 检查在(x, y)位置落子后是否获胜
+// 检查四个方向（横、竖、左斜、右斜）是否连成6子
 function checkWin(x, y, player) {
     const directions = [
-        [1, 0],
-        [0, 1],
-        [1, 1],
-        [1, -1]
+        [1, 0],    // 水平方向
+        [0, 1],    // 垂直方向
+        [1, 1],    // 主对角线方向
+        [1, -1]    // 副对角线方向
     ];
 
     for (const [dx, dy] of directions) {
         let count = 1;
         let positions = [[x, y]];
 
+        // 向一个方向搜索
         let nx = x + dx;
         let ny = y + dy;
         while (isValid(nx, ny) && board[ny][nx] === player) {
@@ -1472,6 +1573,7 @@ function checkWin(x, y, player) {
             ny += dy;
         }
 
+        // 向相反方向搜索
         nx = x - dx;
         ny = y - dy;
         while (isValid(nx, ny) && board[ny][nx] === player) {
@@ -1481,6 +1583,7 @@ function checkWin(x, y, player) {
             ny -= dy;
         }
 
+        // 如果连成6子或更多，返回获胜位置
         if (count >= WIN_COUNT) {
             return positions;
         }
@@ -1601,11 +1704,13 @@ function handleCellClick(x, y) {
     makeMove(x, y);
 }
 
-// ========== AI ==========
+// AI核心算法
+// 检查位置(x, y)附近是否有棋子（剪枝优化用）
+// 用于减少搜索空间，只考虑有棋子附近的位置
 function hasNearbyPiece(x, y, distance = 2) {
     for (let dy = -distance; dy <= distance; dy++) {
         for (let dx = -distance; dx <= distance; dx++) {
-            if (dx === 0 && dy === 0) continue;
+            if (dx === 0 && dy === 0) continue;  // 跳过当前位置
             const nx = x + dx;
             const ny = y + dy;
             if (isValid(nx, ny) && board[ny][nx] !== 0) {
@@ -1616,6 +1721,7 @@ function hasNearbyPiece(x, y, distance = 2) {
     return false;
 }
 
+// 扩展范围检查附近是否有棋子
 function hasNearbyPieceExtended(x, y, distance = 4) {
     for (let dy = -distance; dy <= distance; dy++) {
         for (let dx = -distance; dx <= distance; dx++) {
@@ -1630,12 +1736,14 @@ function hasNearbyPieceExtended(x, y, distance = 4) {
     return false;
 }
 
+// 检查是否为开局候选位置（棋盘中心附近）
 function isOpeningCandidate(x, y) {
     const centerX = Math.floor(BOARD_SIZE / 2);
     const centerY = Math.floor(BOARD_SIZE / 2);
     return Math.abs(x - centerX) <= 3 && Math.abs(y - centerY) <= 3;
 }
 
+// 检查是否为战术要点（有3连或更多的位置）
 function isTacticalPoint(x, y) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     const aiPlayer = getAITurnPlayer();
@@ -1645,6 +1753,7 @@ function isTacticalPoint(x, y) {
         let aiCount = 0;
         let oppCount = 0;
         
+        // 检查AI方的连线
         for (let dir = -1; dir <= 1; dir += 2) {
             let nx = x + dx * dir;
             let ny = y + dy * dir;
@@ -1655,6 +1764,7 @@ function isTacticalPoint(x, y) {
             }
         }
         
+        // 检查对手的连线
         for (let dir = -1; dir <= 1; dir += 2) {
             let nx = x + dx * dir;
             let ny = y + dy * dir;
@@ -1672,9 +1782,11 @@ function isTacticalPoint(x, y) {
     return false;
 }
 
+// 获取候选落子位置
+// 只考虑有意义的位置，大幅减少搜索空间
 function getCandidateMoves(limit = getCandidateLimit()) {
     const candidates = [];
-    const recentMoves = moveHistory.slice(-8);
+    const recentMoves = moveHistory.slice(-8);  // 考虑最近8步
     let searchDistance;
     if (aiDifficulty === 'master') searchDistance = 7;
     else if (aiDifficulty === 'hard') searchDistance = 6;
@@ -1683,22 +1795,29 @@ function getCandidateMoves(limit = getCandidateLimit()) {
 
     for (let y = 0; y < BOARD_SIZE; y++) {
         for (let x = 0; x < BOARD_SIZE; x++) {
-            if (board[y][x] !== 0) continue;
+            if (board[y][x] !== 0) continue;  // 跳过已有棋子位置
 
             let isCandidate = false;
 
+            // 开局阶段：只考虑中心附近
             if (totalMoveCount < 2) {
                 isCandidate = isOpeningCandidate(x, y);
-            } else if (totalMoveCount < 6) {
+            } 
+            // 早期：考虑3格范围内
+            else if (totalMoveCount < 6) {
                 isCandidate = hasNearbyPiece(x, y, 3);
-            } else {
+            } 
+            // 中后期：根据难度确定范围
+            else {
                 isCandidate = hasNearbyPieceExtended(x, y, searchDistance);
             }
 
+            // 补充：最近落子附近的位置
             if (!isCandidate && recentMoves.length > 0) {
                 isCandidate = recentMoves.some(move => Math.abs(move.x - x) <= searchDistance && Math.abs(move.y - y) <= searchDistance);
             }
 
+            // 补充：战术要点位置
             if (!isCandidate && totalMoveCount >= 6) {
                 isCandidate = isTacticalPoint(x, y);
             }
@@ -1730,16 +1849,19 @@ function getCandidateMoves(limit = getCandidateLimit()) {
         .map(({ x, y }) => ({ x, y }));
 }
 
+// 评估单个方向的棋型
+// 统计连子数、两端开放情况、跳连情况
 function evaluateLinePattern(x, y, player, dx, dy) {
-    let total = 1;
-    let openEnds = 0;
-    let jumpSupport = 0;
+    let total = 1;          // 连子总数（包括当前位置）
+    let openEnds = 0;       // 两端开放数（0-2）
+    let jumpSupport = 0;    // 跳连支持数
 
-    for (let dir = -1; dir <= 1; dir += 2) {
+    for (let dir = -1; dir <= 1; dir += 2) {  // 两个方向
         let nx = x + dx * dir;
         let ny = y + dy * dir;
         let count = 0;
 
+        // 统计连子数
         while (isValid(nx, ny) && board[ny][nx] === player) {
             count++;
             nx += dx * dir;
@@ -1748,9 +1870,11 @@ function evaluateLinePattern(x, y, player, dx, dy) {
 
         total += count;
 
+        // 检查端点是否开放
         if (isValid(nx, ny) && board[ny][nx] === 0) {
             openEnds++;
 
+            // 检查是否有跳连（如：X_X，中间空一格）
             const jumpX = nx + dx * dir;
             const jumpY = ny + dy * dir;
             if (isValid(jumpX, jumpY) && board[jumpY][jumpX] === player) {
@@ -1762,28 +1886,34 @@ function evaluateLinePattern(x, y, player, dx, dy) {
     return { total, openEnds, jumpSupport };
 }
 
+// 为棋型打分
+// 根据连子数、开放端、跳连给出分数
 function scorePattern(pattern, mode, isDefense = false) {
+    // 防守时增加威胁权重
     const threatScale = isDefense
         ? (mode === 'easy' ? 1.8 : mode === 'medium' ? 1.6 : 1.4)
         : 1;
 
     let score = 0;
 
-    if (pattern.total >= 6) score = 10000000;
-    else if (pattern.total === 5 && pattern.openEnds >= 2) score = 2000000;
-    else if (pattern.total === 5 && pattern.openEnds === 1) score = 800000;
-    else if (pattern.total === 4 && pattern.openEnds === 2) score = 500000;
-    else if (pattern.total === 4 && pattern.openEnds === 1) score = 150000;
-    else if (pattern.total === 3 && pattern.openEnds === 2) score = 50000;
-    else if (pattern.total === 3 && pattern.openEnds === 1) score = 12000;
-    else if (pattern.total === 2 && pattern.openEnds === 2) score = 3000;
-    else if (pattern.total === 2 && pattern.openEnds === 1) score = 800;
-    else if (pattern.total === 1 && pattern.openEnds === 2) score = 150;
+    // 各种棋型的分数（从高到低）
+    if (pattern.total >= 6) score = 10000000;           // 六连：必胜
+    else if (pattern.total === 5 && pattern.openEnds >= 2) score = 2000000;  // 活五
+    else if (pattern.total === 5 && pattern.openEnds === 1) score = 800000;  // 冲五
+    else if (pattern.total === 4 && pattern.openEnds === 2) score = 500000;  // 活四
+    else if (pattern.total === 4 && pattern.openEnds === 1) score = 150000;  // 冲四
+    else if (pattern.total === 3 && pattern.openEnds === 2) score = 50000;   // 活三
+    else if (pattern.total === 3 && pattern.openEnds === 1) score = 12000;   // 冲三
+    else if (pattern.total === 2 && pattern.openEnds === 2) score = 3000;    // 活二
+    else if (pattern.total === 2 && pattern.openEnds === 1) score = 800;     // 冲二
+    else if (pattern.total === 1 && pattern.openEnds === 2) score = 150;     // 活一
 
+    // 跳连加分
     if (pattern.jumpSupport > 0) {
         score += pattern.jumpSupport * (pattern.total >= 3 ? 1500 : 300);
     }
 
+    // 活三及以上额外加分
     if (pattern.total >= 3 && pattern.openEnds >= 2) {
         score += 3000;
     }
@@ -1791,12 +1921,14 @@ function scorePattern(pattern, mode, isDefense = false) {
     return Math.round(score * threatScale);
 }
 
+// 检测双重威胁（两个方向都有威胁）
 function detectDoubleThreat(x, y, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     let threatCount = 0;
 
     for (const [dx, dy] of directions) {
         const pattern = evaluateLinePattern(x, y, player, dx, dy);
+        // 四连或活三都算威胁
         if ((pattern.total >= 4 && pattern.openEnds >= 1) || 
             (pattern.total >= 3 && pattern.openEnds === 2)) {
             threatCount++;
@@ -1806,6 +1938,7 @@ function detectDoubleThreat(x, y, player) {
     return threatCount >= 2;
 }
 
+// 检测四三威胁（一个方向有四连，另一个方向有活三）
 function detectFourThreeThreat(x, y, player) {
     const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
     let hasFour = false;
@@ -2904,16 +3037,24 @@ function getSearchMoveLimit() {
     return 6;
 }
 
+// Alpha-Beta 剪枝搜索核心算法
+// 经典的博弈树搜索算法，通过Alpha和Beta两个边界值进行剪枝
+// Alpha表示最大化玩家当前能保证的最低分，Beta表示最小化玩家能保证的最高分
+// 当Beta <= Alpha时，这个分支不可能产生更好的结果，可以直接剪枝
 function alphaBetaSearch(depth, alpha, beta, maximizingPlayer, player) {
+    // 叶子节点：达到搜索深度，直接评估局面
     if (depth === 0) {
         return evaluatePositionForSearch(player);
     }
 
+    // 生成候选落点（剪枝优化：只搜索有意义的位置）
     const candidateMoves = getCandidateMoves(getSearchMoveLimit());
     const opponentPlayer = player === 1 ? 2 : 1;
 
+    // 最大化玩家回合（AI视角）
     if (maximizingPlayer) {
         let maxScore = -Infinity;
+        // 排序优化：先搜索评估分高的落点，增加剪枝效率
         const sortedMoves = candidateMoves.map(move => ({
             ...move,
             score: evaluatePosition(move.x, move.y, { playerOverride: player })
@@ -2922,22 +3063,28 @@ function alphaBetaSearch(depth, alpha, beta, maximizingPlayer, player) {
         for (const move of sortedMoves.slice(0, getSearchMoveLimit())) {
             makeMoveForSearch(move.x, move.y, player);
             
+            // 立即获胜检查
             if (checkWin(move.x, move.y, player)) {
                 undoMoveForSearch(move.x, move.y);
                 return 1000000;
             }
 
+            // 递归搜索下一层
             const score = alphaBetaSearch(depth - 1, alpha, beta, false, opponentPlayer);
             undoMoveForSearch(move.x, move.y);
 
+            // 更新最大值和Alpha边界
             maxScore = Math.max(maxScore, score);
             alpha = Math.max(alpha, score);
+            
+            // Alpha-Beta剪枝：如果当前分支不会有更好结果，直接剪枝
             if (beta <= alpha) {
                 break;
             }
         }
         return maxScore;
     } else {
+        // 最小化玩家回合（对手视角）
         let minScore = Infinity;
         const sortedMoves = candidateMoves.map(move => ({
             ...move,
@@ -2955,8 +3102,11 @@ function alphaBetaSearch(depth, alpha, beta, maximizingPlayer, player) {
             const score = alphaBetaSearch(depth - 1, alpha, beta, true, player);
             undoMoveForSearch(move.x, move.y);
 
+            // 更新最小值和Beta边界
             minScore = Math.min(minScore, score);
             beta = Math.min(beta, score);
+            
+            // Alpha-Beta剪枝
             if (beta <= alpha) {
                 break;
             }
@@ -3257,111 +3407,93 @@ function evaluateMoveWithSearch(move, player, maxDepth, startTime, maxTime) {
     };
 }
 
-/**
- * 六子棋专用的 Alpha-Beta 搜索
- * 考虑双落子规则：非第一手每回合下2子
- * 
- * @param {number} depth - 剩余搜索深度
- * @param {number} alpha - Alpha值
- * @param {number} beta - Beta值
- * @param {boolean} isMaximizing - 是否是最大化玩家
- * @param {number} currentPlayer - 当前行动的玩家
- * @param {number} aiPlayer - AI玩家（用于评估）
- * @param {number} startTime - 开始时间
- * @param {number} maxTime - 最大时间
- * @returns {number|null} 评估分数，null表示超时
- */
+// ========== 六子棋专用的 Alpha-Beta 搜索 ==========
+// 答辩要点：这是核心算法！相比标准Alpha-Beta有以下优化：
+// 1. 置换表(Transposition Table)：缓存相同局面，避免重复计算
+// 2. 历史启发式(History Heuristic)：根据历史搜索记录对落点排序
+// 3. 双落子规则处理：六子棋每回合下2子（第一手除外）
+// 4. 超时处理：避免搜索时间过长
 function alphaBetaForConnect6(depth, alpha, beta, isMaximizing, currentPlayer, aiPlayer, startTime, maxTime) {
-    // 增加搜索节点计数
+    // 统计搜索节点数（用于性能分析）
     searchOptimizations.nodesSearched++;
 
-    // 获取置换表缓存
+    // ========== 置换表缓存检查 ==========
+    // 答辩要点：如果这个局面之前搜索过且深度足够，直接返回缓存结果
     const hash = searchOptimizations.getBoardHash();
     const cached = searchOptimizations.lookupTable(hash, depth);
     if (cached) {
         if (cached.type === 'exact') {
-            return cached.score;
+            return cached.score;  // 精确值，直接返回
         } else if (cached.type === 'lower' && cached.score >= beta) {
-            return cached.score;
+            return cached.score;  // 下界 >= beta，可以剪枝
         } else if (cached.type === 'upper' && cached.score <= alpha) {
-            return cached.score;
+            return cached.score;  // 上界 <= alpha，可以剪枝
         }
     }
 
-    // 叶子节点评估
+    // ========== 叶子节点处理 ==========
+    // 达到搜索深度，使用评估函数打分
     if (depth === 0) {
         const score = evaluateBoardPosition(aiPlayer);
         searchOptimizations.storeTable(hash, depth, score, 'exact', null);
         return score;
     }
 
-    // 超时检查
+    // 超时保护
     if (Date.now() - startTime > maxTime) {
-        return null;  // 超时，返回null
+        return null;
     }
 
     const opponentPlayer = currentPlayer === 1 ? 2 : 1;
     const isAI = currentPlayer === aiPlayer;
 
-    // 获取候选落点
+    // ========== 候选落点生成与排序 ==========
     const candidates = getDeepSearchCandidates(aiPlayer, currentPlayer);
-
     if (candidates.length === 0) {
         const score = evaluateBoardPosition(aiPlayer);
         searchOptimizations.storeTable(hash, depth, score, 'exact', null);
         return score;
     }
 
-    // 按历史启发式排序
+    // 历史启发式排序：之前搜索中表现好的落点优先
     candidates.sort((a, b) => {
         const scoreA = searchOptimizations.getHistoryScore(a.x, a.y, currentPlayer);
         const scoreB = searchOptimizations.getHistoryScore(b.x, b.y, currentPlayer);
         return scoreB - scoreA;
     });
 
-    // 限制搜索节点数
+    // 限制搜索宽度（进一步优化性能）
     const searchLimit = getSearchMoveLimit();
     const movesToSearch = candidates.slice(0, searchLimit);
 
+    // ========== 最大化玩家（AI视角） ==========
     if (isMaximizing) {
         let maxScore = -Infinity;
         let bestMove = null;
         let entryType = 'upper';
 
         for (const move of movesToSearch) {
-            // 放置棋子
             board[move.y][move.x] = currentPlayer;
 
-            // 检查胜负
+            // 即时获胜检查
             if (checkWin(move.x, move.y, currentPlayer)) {
                 board[move.y][move.x] = 0;
-                // AI获胜返回高分，对手获胜返回低分
                 const winScore = isAI ? 1000000 : -1000000;
                 searchOptimizations.updateHistory(move.x, move.y, depth, currentPlayer);
                 searchOptimizations.storeTable(hash, depth, winScore, 'exact', move);
                 return winScore;
             }
 
-            // 递归搜索（对手视角）
+            // 递归搜索
             const childScore = alphaBetaForConnect6(
-                depth - 1,
-                alpha,
-                beta,
-                false,
-                opponentPlayer,
-                aiPlayer,
-                startTime,
-                maxTime
+                depth - 1, alpha, beta, false, opponentPlayer, aiPlayer, startTime, maxTime
             );
 
-            // 恢复棋盘
             board[move.y][move.x] = 0;
 
-            // 处理超时
-            if (childScore === null) {
-                return null;
-            }
+            if (childScore === null) return null;  // 超时
 
+            // 更新最大值
             if (childScore > maxScore) {
                 maxScore = childScore;
                 bestMove = move;
@@ -3371,7 +3503,7 @@ function alphaBetaForConnect6(depth, alpha, beta, isMaximizing, currentPlayer, a
                 }
             }
 
-            // Alpha-Beta 剪枝
+            // ========== Alpha-Beta 剪枝 ==========
             if (beta <= alpha) {
                 searchOptimizations.updateHistory(move.x, move.y, depth, currentPlayer);
                 entryType = 'lower';
@@ -3379,47 +3511,32 @@ function alphaBetaForConnect6(depth, alpha, beta, isMaximizing, currentPlayer, a
             }
         }
 
-        // 存储到置换表
         searchOptimizations.storeTable(hash, depth, maxScore, entryType, bestMove);
         return maxScore;
     } else {
+        // ========== 最小化玩家（对手视角） ==========
         let minScore = Infinity;
         let bestMove = null;
         let entryType = 'lower';
 
         for (const move of movesToSearch) {
-            // 放置棋子
             board[move.y][move.x] = currentPlayer;
 
-            // 检查胜负
             if (checkWin(move.x, move.y, currentPlayer)) {
                 board[move.y][move.x] = 0;
-                // AI获胜返回高分，对手获胜返回低分
                 const winScore = isAI ? 1000000 : -1000000;
                 searchOptimizations.updateHistory(move.x, move.y, depth, currentPlayer);
                 searchOptimizations.storeTable(hash, depth, winScore, 'exact', move);
                 return winScore;
             }
 
-            // 递归搜索（AI视角）
             const childScore = alphaBetaForConnect6(
-                depth - 1,
-                alpha,
-                beta,
-                true,
-                opponentPlayer,
-                aiPlayer,
-                startTime,
-                maxTime
+                depth - 1, alpha, beta, true, opponentPlayer, aiPlayer, startTime, maxTime
             );
 
-            // 恢复棋盘
             board[move.y][move.x] = 0;
 
-            // 处理超时
-            if (childScore === null) {
-                return null;
-            }
+            if (childScore === null) return null;
 
             if (childScore < minScore) {
                 minScore = childScore;
@@ -3430,7 +3547,6 @@ function alphaBetaForConnect6(depth, alpha, beta, isMaximizing, currentPlayer, a
                 }
             }
 
-            // Alpha-Beta 剪枝
             if (beta <= alpha) {
                 searchOptimizations.updateHistory(move.x, move.y, depth, currentPlayer);
                 entryType = 'upper';
@@ -3438,7 +3554,6 @@ function alphaBetaForConnect6(depth, alpha, beta, isMaximizing, currentPlayer, a
             }
         }
 
-        // 存储到置换表
         searchOptimizations.storeTable(hash, depth, minScore, entryType, bestMove);
         return minScore;
     }
@@ -3551,15 +3666,21 @@ function evaluateBoardPosition(aiPlayer) {
 }
 
 // ========== 深度搜索优化组件 ==========
+// 答辩要点：这个类实现了两大核心优化技术
+// 1. 置换表(Transposition Table)：缓存已搜索过的局面
+// 2. 历史启发式(History Heuristic)：记录好的落子位置，用于排序
 class SearchOptimizations {
     constructor() {
-        this.transpositionTable = new Map();
-        this.historyHeuristic = {};
-        this.maxTableSize = 100000;
-        this.nodesSearched = 0;
-        this.cacheHits = 0;
+        this.transpositionTable = new Map();  // 置换表：局面哈希 -> 搜索结果
+        this.historyHeuristic = {};          // 历史启发表：记录每个位置的历史表现
+        this.maxTableSize = 100000;          // 置换表最大容量
+        this.nodesSearched = 0;              // 统计搜索节点数
+        this.cacheHits = 0;                  // 统计缓存命中次数
     }
 
+    // ========== 置换表相关方法 ==========
+    
+    // 计算棋盘局面的哈希值（使用简单的多项式哈希）
     getBoardHash() {
         let hash = 0;
         for (let y = 0; y < BOARD_SIZE; y++) {
@@ -3570,6 +3691,8 @@ class SearchOptimizations {
         return hash;
     }
 
+    // 查找置换表
+    // 答辩要点：只有当缓存的深度 >= 当前搜索深度时，才使用缓存结果
     lookupTable(hash, depth) {
         const entry = this.transpositionTable.get(hash);
         if (entry && entry.depth >= depth) {
@@ -3579,6 +3702,8 @@ class SearchOptimizations {
         return null;
     }
 
+    // 存储到置换表
+    // 答辩要点：使用FIFO策略淘汰旧条目，避免内存溢出
     storeTable(hash, depth, score, type, bestMove) {
         if (this.transpositionTable.size >= this.maxTableSize) {
             this.transpositionTable.delete(this.transpositionTable.keys().next().value);
@@ -3586,12 +3711,16 @@ class SearchOptimizations {
         this.transpositionTable.set(hash, {
             depth,
             score,
-            type, // 'exact', 'lower', 'upper'
+            type, // 'exact'(精确值), 'lower'(下界), 'upper'(上界)
             bestMove,
             timestamp: Date.now()
         });
     }
 
+    // ========== 历史启发式相关方法 ==========
+    
+    // 更新历史启发表：当某个位置导致剪枝时，增加其权重
+    // 答辩要点：权重与搜索深度的平方成正比，深度越深的剪枝越重要
     updateHistory(x, y, depth, player) {
         const key = `${player}-${x}-${y}`;
         if (!this.historyHeuristic[key]) {
@@ -3600,11 +3729,13 @@ class SearchOptimizations {
         this.historyHeuristic[key] += depth * depth;
     }
 
+    // 获取某个位置的历史启发分数
     getHistoryScore(x, y, player) {
         const key = `${player}-${x}-${y}`;
         return this.historyHeuristic[key] || 0;
     }
 
+    // 清空所有缓存和统计
     clear() {
         this.transpositionTable.clear();
         this.historyHeuristic = {};
@@ -3612,6 +3743,7 @@ class SearchOptimizations {
         this.cacheHits = 0;
     }
 
+    // 获取统计信息（用于调试和性能分析）
     getStats() {
         return {
             tableSize: this.transpositionTable.size,
